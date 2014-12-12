@@ -1,0 +1,4 @@
+main=true
+gui=true
+platform-id=ldm
+local-port=2100
