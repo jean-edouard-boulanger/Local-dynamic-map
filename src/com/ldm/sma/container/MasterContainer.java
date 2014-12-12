@@ -1,6 +1,6 @@
 package com.ldm.sma.container;
 
-import jade.core.AgentContainer;
+import jade.wrapper.AgentContainer;
 import jade.core.Profile;
 import jade.core.ProfileImpl;
 import jade.core.Runtime;
@@ -12,7 +12,7 @@ public class MasterContainer {
 		Profile profile = null;
 		try{
 			profile = new ProfileImpl("master_container.property");
-			AgentContainer agentContainer = (AgentContainer) runtime.createMainContainer(profile);
+			AgentContainer container = runtime.createMainContainer(profile);
 		}
 		catch(Exception e){
 			System.err.println("Impossible de démarrer le container master: " + e.getMessage());

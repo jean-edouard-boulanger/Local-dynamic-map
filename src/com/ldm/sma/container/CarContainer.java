@@ -2,7 +2,6 @@ package com.ldm.sma.container;
 
 import java.util.Random;
 
-import jade.core.AgentContainer;
 import jade.core.Profile;
 import jade.core.ProfileImpl;
 import jade.core.Runtime;
@@ -18,7 +17,7 @@ public class CarContainer {
 			profile = new ProfileImpl("slave_container.property");
 			ContainerController container = runtime.createAgentContainer(profile);
 			
-			AgentController carAgent = container.createNewAgent("Voiture" + (new Random()).nextInt(), "com.ldm.sma.agent.Car", null);
+			AgentController carAgent = container.createNewAgent("Voiture" + (new Random()).nextInt(), "com.ldm.sma.agent.CarAgent", null);
 			
 			carAgent.start();
 		}
