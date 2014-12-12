@@ -9,10 +9,10 @@ public class MasterContainer {
 
 	public static void main(String[] args){
 		Runtime runtime = Runtime.instance();
-		Profile p = null;
+		Profile profile = null;
 		try{
-			p = new ProfileImpl("master_container.property");
-			AgentContainer agentContainer = (AgentContainer) runtime.createMainContainer(p);
+			profile = new ProfileImpl("master_container.property");
+			AgentContainer agentContainer = (AgentContainer) runtime.createMainContainer(profile);
 		}
 		catch(Exception e){
 			System.err.println("Impossible de démarrer le container master: " + e.getMessage());
