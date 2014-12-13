@@ -7,6 +7,7 @@ import javafx.embed.swing.JFXPanel;
 import javax.swing.SwingUtilities;
 
 import com.ldm.model.geometry.Position;
+import com.ldm.model.structure.IR;
 import com.ldm.ui.CarUI;
 
 import jade.core.Agent;
@@ -16,6 +17,9 @@ import jade.gui.GuiEvent;
 import jade.lang.acl.ACLMessage;
 
 public class CarAgent extends ShortRangeAgent {
+    
+    // Tableau stockant les différents IR valides d'un véhicule
+    private IR[] IRsCollection;
 	
 	private PropertyChangeSupport propertyChangeCarAgent;
 	CarUI carUI = null;
@@ -68,5 +72,46 @@ public class CarAgent extends ShortRangeAgent {
 			CarAgent.this.sendAround(new ACLMessage(ACLMessage.INFORM));
 		}
 	}
+        
+        // ajout d'un nouveau IR en supprimant l'ancien si invalide
+        public IR aggregateIR(IR newIR)
+        {
+            Position pos1 = newIR.getPosDepart();
+            Position pos2 = newIR.getPosArrivee();
+            
+            int ArrayPos = lookForIR(pos1, pos2);
+            IR returnedIR = this.IRsCollection[ArrayPos];
+            if ( ArrayPos == -1)
+            {
+                int j = this.IRsCollection.length;
+                this.IRsCollection[j+1] = newIR;
+                returnedIR = newIR;
+                // EMISSION IR
+            }
+            else
+            {
+                if (this.IRsCollection[ArrayPos].isOlderThan(newIR))
+                {
+                    this.IRsCollection[ArrayPos] = newIR;
+                    returnedIR = newIR;
+                    // EMISSION IR
+                }
+            }
+            return returnedIR;
+        }
+        
+        private int lookForIR(Position posD, Position posA)
+        {
+            int IROffset = -1;
+            for (int i = 0; i < this.IRsCollection.length; i++)
+            {
+                if (this.IRsCollection[i].getPosDepart() == posD && this.IRsCollection[i].getPosArrivee() == posA)
+                {
+                    IROffset = i;
+                    break;
+                }
+            }
+            return IROffset;
+        }
 	
 }
