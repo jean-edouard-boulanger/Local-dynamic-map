@@ -47,7 +47,7 @@ public class IR {
         return this.posDepart;
     }
     
-    public Position getPosarrivee()
+    public Position getPosArrivee()
     {
         return this.posArrivee;
     }
