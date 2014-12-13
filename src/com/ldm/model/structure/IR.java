@@ -10,9 +10,10 @@ import java.util.Date;
 public class IR {
     final private long IR_TIMEOUT = 2000;
     
-    private Position pos = new Position(0,0);
+    private Position posDepart = new Position(0,0);
+    private Position posArrivee = new Position(0,0);
     private Date creationTimestamp = new Date();
-    private double averageTime = 0;
+    private long averageTime = 0;
     private int vehiculesNumber = 0;
     private boolean isTimout = false;
     
@@ -20,9 +21,10 @@ public class IR {
     public IR() {}
     
     // full constructor
-    public IR(Position pos, Date date, double time, int number, boolean timeout)
+    public IR(Position pos1, Position pos2, Date date, long time, int number, boolean timeout)
     {
-        this.pos = pos;
+        this.posDepart = pos1;
+        this.posArrivee = pos2;
         this.creationTimestamp = date;
         this.averageTime = time;
         this.vehiculesNumber = number;
@@ -30,18 +32,24 @@ public class IR {
     }
     
     // fastforward constructor
-    public IR(Position pos, Date date, double time)
+    public IR(Position pos1, Position pos2, long time)
     {
-        this.pos = pos;
-        this.creationTimestamp = date;
+        this.posDepart = pos1;
+        this.posArrivee = pos2;
+        this.creationTimestamp = new Date();
         this.averageTime = time;
         this.vehiculesNumber = 1;
         this.isTimout = false;
     }
     
-    public Position getPos()
+    public Position getPosDepart()
     {
-        return this.pos;
+        return this.posDepart;
+    }
+    
+    public Position getPosArrivee()
+    {
+        return this.posArrivee;
     }
     
     public Date getCreationTimestamp()
@@ -49,7 +57,7 @@ public class IR {
         return this.creationTimestamp;
     }
     
-    public double getAverageTime()
+    public long getAverageTime()
     {
         return this.averageTime;
     }
@@ -65,9 +73,10 @@ public class IR {
     }
     
     
-    public boolean isOlderThan(IR newIR)
+    public boolean isTooOld()
     {        
-        if ((newIR.creationTimestamp.getTime() - this.creationTimestamp.getTime()) > this.IR_TIMEOUT)
+        Date currentDate = new Date();
+        if (this.creationTimestamp.getTime() + this.IR_TIMEOUT > currentDate.getTime())
         {
             return true;
         }
