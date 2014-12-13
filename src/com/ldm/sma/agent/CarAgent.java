@@ -29,7 +29,7 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 	
 	private PropertyChangeSupport propertyChangeCarAgent;
 	CarUI carUI = null;
-	
+		
 	public CarAgent(){
 		super();
 		propertyChangeCarAgent = new PropertyChangeSupport(this);
@@ -61,15 +61,14 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 				
 		this.addBehaviour(new HandleMessagesBehaviour(this));
 	}
-
+	
 	@Override
-	protected void onGuiEvent(GuiEvent arg0) {
-
+	public void onIntersectionPassed(Position intersectionPosition) {
+		
 	}
 	
 	@Override
-	public void onIntersectionPassed() {
-		// TODO Auto-generated method stub
+	public void onDestinationReached() {
 		
 	}
 	
@@ -156,4 +155,8 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
         // EMISSION IR
     }
 	
+	@Override
+	protected void onGuiEvent(GuiEvent arg0) {
+
+	}
 }
