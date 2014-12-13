@@ -115,7 +115,7 @@ public class CarAgent extends ShortRangeAgent {
             return IROffset;
         }
         
-        public IR aggregateDL(DL newDL)
+        public void aggregateDL(DL newDL)
         {
             Position pos1 = newDL.getPosDepart();
             Position pos2 = newDL.getPosArrivee();
