@@ -7,6 +7,7 @@ import javafx.embed.swing.JFXPanel;
 import javax.swing.SwingUtilities;
 
 import com.ldm.model.geometry.Position;
+import com.ldm.model.structure.DL;
 import com.ldm.model.structure.IR;
 import com.ldm.ui.CarUI;
 
@@ -90,7 +91,7 @@ public class CarAgent extends ShortRangeAgent {
             }
             else
             {
-                if (this.IRsCollection[ArrayPos].isOlderThan(newIR))
+                if (this.IRsCollection[ArrayPos].isTooOld())
                 {
                     this.IRsCollection[ArrayPos] = newIR;
                     returnedIR = newIR;
@@ -112,6 +113,35 @@ public class CarAgent extends ShortRangeAgent {
                 }
             }
             return IROffset;
+        }
+        
+        public IR aggregateDL(DL newDL)
+        {
+            Position pos1 = newDL.getPosDepart();
+            Position pos2 = newDL.getPosArrivee();
+            
+            int ArrayPos = lookForIR(pos1, pos2);
+            
+            if(ArrayPos > 0)
+            {
+                if(this.IRsCollection[ArrayPos].isTooOld())
+                {
+                    IR newIR = new IR(newDL.getPosDepart(), newDL.getPosArrivee(), newDL.getTpsParcours());
+                }
+                else
+                {
+                    IR oldIR = this.IRsCollection[ArrayPos];
+                    long newTemps = (oldIR.getAverageTime() + newDL.getTpsParcours()) / (oldIR.getVehiculesNumber() + 1);
+                    IR newIR = new IR(newDL.getPosDepart(), newDL.getPosArrivee(), newTemps);
+                }
+            }
+            else
+            {
+                IR newIR = new IR(newDL.getPosDepart(), newDL.getPosArrivee(), newDL.getTpsParcours());
+                this.IRsCollection[this.IRsCollection.length + 1] = newIR;
+            }
+            
+            // EMISSION IR
         }
 	
 }

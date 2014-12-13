@@ -20,7 +20,6 @@ public class DL {
 	 public void saveDL(Position pos, Date tps){
 		 this.posArrivee=pos;
 		 this.HeureFin = tps;
-		 
 	 }
 	 
 	 public long getTpsParcours(){
