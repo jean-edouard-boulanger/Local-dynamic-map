@@ -8,6 +8,7 @@ import javax.swing.SwingUtilities;
 
 import com.ldm.model.GPSObserver;
 import com.ldm.model.geometry.Position;
+import com.ldm.model.geometry.Vect;
 import com.ldm.model.structure.DL;
 import com.ldm.model.structure.IR;
 import com.ldm.sma.agent.helper.AgentHelper;
@@ -64,6 +65,16 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 	
 	@Override
 	public void onIntersectionPassed(Position intersectionPosition) {
+		
+	}
+	
+	@Override
+	public void onWayPointPassed(){
+		
+	}
+	
+	@Override
+	public void onHeadingChanged(Vect heading){
 		
 	}
 	
