@@ -10,7 +10,8 @@ import java.util.Date;
 public class IR {
     final private long IR_TIMEOUT = 2000;
     
-    private Position pos = new Position(0,0);
+    private Position posDepart = new Position(0,0);
+    private Position posArrivee = new Position(0,0);
     private Date creationTimestamp = new Date();
     private double averageTime = 0;
     private int vehiculesNumber = 0;
@@ -20,9 +21,10 @@ public class IR {
     public IR() {}
     
     // full constructor
-    public IR(Position pos, Date date, double time, int number, boolean timeout)
+    public IR(Position pos1, Position pos2, Date date, double time, int number, boolean timeout)
     {
-        this.pos = pos;
+        this.posDepart = pos1;
+        this.posArrivee = pos2;
         this.creationTimestamp = date;
         this.averageTime = time;
         this.vehiculesNumber = number;
@@ -30,18 +32,24 @@ public class IR {
     }
     
     // fastforward constructor
-    public IR(Position pos, Date date, double time)
+    public IR(Position pos1, Position pos2, Date date, double time)
     {
-        this.pos = pos;
+        this.posDepart = pos1;
+        this.posArrivee = pos2;
         this.creationTimestamp = date;
         this.averageTime = time;
         this.vehiculesNumber = 1;
         this.isTimout = false;
     }
     
-    public Position getPos()
+    public Position getPosDepart()
     {
-        return this.pos;
+        return this.posDepart;
+    }
+    
+    public Position getPosarrivee()
+    {
+        return this.posArrivee;
     }
     
     public Date getCreationTimestamp()
