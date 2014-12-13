@@ -2,7 +2,6 @@ package com.ldm.model;
 
 import java.util.ArrayList;
 
-import com.ldm.data.structure.RoadNetwork;
 import com.ldm.model.geometry.Position;
 
 public class GPS {

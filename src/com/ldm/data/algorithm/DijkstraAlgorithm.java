@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.ldm.data.structure.Pair;
-import com.ldm.data.structure.RoadNetwork;
+import com.ldm.model.RoadNetwork;
 
 public class DijkstraAlgorithm {
 

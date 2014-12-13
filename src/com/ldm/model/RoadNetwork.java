@@ -1,4 +1,4 @@
-package com.ldm.data.structure;
+package com.ldm.model;
 
 import java.util.ArrayList;
 import java.util.HashMap;

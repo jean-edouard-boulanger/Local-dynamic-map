@@ -3,7 +3,7 @@ package com.ldm.test;
 import grph.in_memory.InMemoryGrph;
 
 import com.ldm.data.algorithm.DijkstraAlgorithm;
-import com.ldm.data.structure.RoadNetwork;
+import com.ldm.model.RoadNetwork;
 import com.ldm.model.geometry.Position;
 
 public class Dijkstra {
