@@ -9,23 +9,23 @@ public class DL {
 	
 	 private Position posDepart = new Position(0,0);
 	 private Position posArrivee = new Position(0,0);
-	 private Date HeureDébut;
-	 private Date HeureFin;
+	 private Date heureDebut;
+	 private Date heureFin;
 	 
 	 public DL(Position pos, Date tps){
 		 this.setPosDepart(pos);
-		 this.setHeureDébut(tps);
+		 this.heureDebut =tps;
 	 }
 	 
 	 public void saveDL(Position pos, Date tps){
 		 this.posArrivee=pos;
-		 this.HeureFin = tps;
+		 this.heureFin = tps;
 		 
 	 }
 	 
 	 public long getTpsParcours(){
-		 if(HeureDébut != null && HeureFin != null){
-			 return (HeureFin.getTime() - HeureDébut.getTime()); 
+		 if(heureDebut != null && heureFin != null){
+			 return (heureFin.getTime() - heureDebut.getTime()); 
 		 }
 		 return 0;
 	 }
@@ -46,21 +46,6 @@ public class DL {
 		this.posArrivee = posArrivee;
 	}
 
-	public Date getHeureDébut() {
-		return HeureDébut;
-	}
-
-	public void setHeureDébut(Date heureDébut) {
-		HeureDébut = heureDébut;
-	}
-
-	public Date getHeureFin() {
-		return HeureFin;
-	}
-
-	public void setHeureFin(Date heureFin) {
-		HeureFin = heureFin;
-	}
 
 	public long getDL_TIMEOUT() {
 		return DL_TIMEOUT;
