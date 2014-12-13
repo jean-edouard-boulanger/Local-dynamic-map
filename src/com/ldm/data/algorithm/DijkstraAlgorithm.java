@@ -1,6 +1,7 @@
 package com.ldm.data.algorithm;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -83,6 +84,8 @@ public class DijkstraAlgorithm {
 			currentNode = shortestPaths.get(currentNode).first;
 		}
 		path.add(vd);
+		
+		Collections.reverse(path);
 		
 		return path;
 	}
