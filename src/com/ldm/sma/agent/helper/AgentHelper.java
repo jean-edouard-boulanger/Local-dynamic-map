@@ -8,6 +8,7 @@ import com.ldm.sma.agent.ShortRangeAgent;
 import com.ldm.sma.message.Message;
 import com.ldm.sma.message.MessageVisitor;
 
+import jade.core.AID;
 import jade.core.Agent;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
@@ -22,6 +23,30 @@ public class AgentHelper {
 	public static boolean receiveMessageFromAround(ShortRangeAgent agent, MessageTemplate template, MessageVisitor visitor){
 		ACLMessage aclmsg = agent.receiveFromAround(template);
 		return handleMessage(aclmsg, visitor);
+	}
+	
+	public static void sendMessageAround(ShortRangeAgent sender, int performative, Message data){
+		try{
+			ACLMessage msg = new ACLMessage(performative);
+			if(data != null)
+				msg.setContent(data.toJson());
+			
+			sender.sendAround(msg);
+		} catch(IOException e){
+			e.printStackTrace();
+		}
+	}
+	
+	public static void sendMessage(Agent sender, int performative, Message data){
+		try{
+			ACLMessage msg = new ACLMessage(performative);
+			if(data != null)
+				msg.setContent(data.toJson());
+			
+			sender.send(msg);
+		} catch(IOException e){
+			e.printStackTrace();
+		}
 	}
 	
 	private static boolean handleMessage(ACLMessage aclmsg, MessageVisitor visitor){
