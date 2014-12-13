@@ -15,6 +15,7 @@ public class DL {
 	 public DL(Position pos, Date tps){
 		 this.setPosDepart(pos);
 		 this.heureDebut =tps;
+
 	 }
 	 
 	 public void saveDL(Position pos, Date tps){
@@ -24,6 +25,7 @@ public class DL {
 	 }
 	 
 	 public long getTpsParcours(){
+
 		 if(heureDebut != null && heureFin != null){
 			 return (heureFin.getTime() - heureDebut.getTime()); 
 		 }
@@ -46,6 +48,21 @@ public class DL {
 		this.posArrivee = posArrivee;
 	}
 
+	public Date getHeureDebut() {
+		return heureDebut;
+	}
+
+	public void setHeureDebut(Date heureDebut) {
+		this.heureDebut = heureDebut;
+	}
+
+	public Date getHeureFin() {
+		return heureFin;
+	}
+
+	public void setHeureFin(Date heureFin) {
+		this.heureFin = heureFin;
+	}
 
 	public long getDL_TIMEOUT() {
 		return DL_TIMEOUT;
