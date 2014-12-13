@@ -21,11 +21,13 @@ import jade.core.behaviours.OneShotBehaviour;
 import jade.gui.GuiEvent;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
+import java.util.ArrayList;
+import java.util.Iterator;
 
 public class CarAgent extends ShortRangeAgent implements GPSObserver {
     
     // Tableau stockant les différents IR valides d'un véhicule
-    private IR[] IRsCollection;
+    private ArrayList<IR> IRsCollection = new ArrayList();
 	
 	private PropertyChangeSupport propertyChangeCarAgent;
 	CarUI carUI = null;
@@ -93,19 +95,18 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
         Position pos2 = newIR.getPosArrivee();
         
         int ArrayPos = lookForIR(pos1, pos2);
-        IR returnedIR = this.IRsCollection[ArrayPos];
+        IR returnedIR = this.IRsCollection.get(ArrayPos);
         if ( ArrayPos == -1)
         {
-            int j = this.IRsCollection.length;
-            this.IRsCollection[j+1] = newIR;
+            this.IRsCollection.set(ArrayPos, newIR);
             returnedIR = newIR;
             // EMISSION IR
         }
         else
         {
-            if (this.IRsCollection[ArrayPos].isTooOld())
+            if (this.IRsCollection.get(ArrayPos).isTooOld())
             {
-                this.IRsCollection[ArrayPos] = newIR;
+                this.IRsCollection.set(ArrayPos, newIR);
                 returnedIR = newIR;
                 // EMISSION IR
             }
@@ -116,11 +117,13 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
     private int lookForIR(Position posD, Position posA)
     {
         int IROffset = -1;
-        for (int i = 0; i < this.IRsCollection.length; i++)
+        Iterator<IR> it = IRsCollection.iterator();
+        while(it.hasNext())
         {
-            if (this.IRsCollection[i].getPosDepart() == posD && this.IRsCollection[i].getPosArrivee() == posA)
+            IR currentIR = it.next();
+            if (currentIR.getPosDepart() == posD && currentIR.getPosArrivee() == posA)
             {
-                IROffset = i;
+                IROffset = IRsCollection.indexOf(currentIR);
                 break;
             }
         }
@@ -136,13 +139,13 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
         
         if(ArrayPos > 0)
         {
-            if(this.IRsCollection[ArrayPos].isTooOld())
+            if(this.IRsCollection.get(ArrayPos).isTooOld())
             {
                 IR newIR = new IR(newDL.getPosDepart(), newDL.getPosArrivee(), newDL.getTpsParcours());
             }
             else
             {
-                IR oldIR = this.IRsCollection[ArrayPos];
+                IR oldIR = this.IRsCollection.get(ArrayPos);
                 long newTemps = (oldIR.getAverageTime() + newDL.getTpsParcours()) / (oldIR.getVehiculesNumber() + 1);
                 IR newIR = new IR(newDL.getPosDepart(), newDL.getPosArrivee(), newTemps);
             }
@@ -150,7 +153,7 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
         else
         {
             IR newIR = new IR(newDL.getPosDepart(), newDL.getPosArrivee(), newDL.getTpsParcours());
-            this.IRsCollection[this.IRsCollection.length + 1] = newIR;
+            this.IRsCollection.set(ArrayPos, newIR);
         }
         
         // EMISSION IR
