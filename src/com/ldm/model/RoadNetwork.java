@@ -14,21 +14,21 @@ public class RoadNetwork extends InMemoryGrph {
 	HashMap<Integer, Integer> speedLimits = new HashMap<>();
 	
 	
-	public void addRoad(int r, int i0, int i1, int speedLimit){
+	public void addRoad(int i0, int i1, int speedLimit){
 		if(!this.containsVertex(i0) || !this.containsVertex(i1)){
-			System.out.println("[WARNING@RoadNetwork] Can't add road " + r + ": missing intersection " + i0 + " or " + i1);
+			System.out.println("[WARNING@RoadNetwork] Can't add road, missing intersection " + i0 + " or " + i1);
 			return;
 		}
 		
-		this.addDirectedSimpleEdge(i0, r, i1);
-		this.setRoadSpeedLimit(r, speedLimit);
+		int roadId = this.addDirectedSimpleEdge(i0, i1);
+		this.setRoadSpeedLimit(roadId, speedLimit);
 		
-		this.setRoadTravelTime(r, Position.evaluateDistance(getIntersectionPosition(i0), getIntersectionPosition(i1)) / speedLimit);
+		this.setRoadTravelTime(roadId, Position.evaluateDistance(getIntersectionPosition(i0), getIntersectionPosition(i1)) / speedLimit);
 	}
 	
-	public void addBidirectionalRoad(int r1, int r2, int i0, int i1, int speedLimit){
-		this.addRoad(r1, i0, i1, speedLimit);
-		this.addRoad(r2, i1, i0, speedLimit);
+	public void addBidirectionalRoad(int i0, int i1, int speedLimit){
+		this.addRoad(i0, i1, speedLimit);
+		this.addRoad(i1, i0, speedLimit);
 	}
 	
 	public ArrayList<Integer> getRoads(){
