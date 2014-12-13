@@ -17,4 +17,8 @@ public class Vect {
 		this.dy /= norm;
 		return this;
 	}
+	
+	public String toString(){
+		return "("+ dx +","+ dy +")";
+	}
 }

@@ -7,10 +7,6 @@ public interface GPSObserver {
 	
 	public void onIntersectionPassed(Position intersectionPosition);
 	
-	public void onWayPointPassed();
-	
-	public void onHeadingChanged(Vect newHeading);
-	
 	public void onDestinationReached();
 	
 }

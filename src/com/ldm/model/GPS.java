@@ -2,6 +2,8 @@ package com.ldm.model;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Random;
 
 import com.ldm.data.algorithm.DijkstraAlgorithm;
 import com.ldm.model.geometry.Position;
@@ -21,7 +23,7 @@ public class GPS {
 	private Integer lastIntersection = null;
 	
 	private ArrayDeque<Integer> itinerary = null;
-	
+		
 	public GPS(){}
 	
 	public GPS(RoadNetwork map){this.map = map;}
@@ -43,7 +45,8 @@ public class GPS {
 		
 		int closestIntersection = this.FindClosestIntersection();
 		if(this.getDistanceToIntersection(closestIntersection) < reachDistanceThreshold){
-			if(this.lastIntersection != closestIntersection){
+			if(this.lastIntersection == null || this.lastIntersection != closestIntersection){
+				System.out.println("[DEBUG@GPS@setCurrentPosition] notifyIntersectionPassed");
 				this.notifyIntersectionPassed(closestIntersection);
 			}
 			
@@ -57,14 +60,6 @@ public class GPS {
 				this.notifyDestinationReached();
 				this.navigationMode = false;
 			}
-			else
-			{
-				this.notifyWayPointPassed();
-			}
-		}
-		
-		if(this.isNavigationModeOn()){
-			this.notifyHeadingChanged(this.calculateHeading());
 		}
 	}
 	
@@ -130,11 +125,22 @@ public class GPS {
 	}
 	
 	/**
+	 * @return The distance between the current position and the next way point (Intersection)
+	 */
+	public Double getDistanceToNextWayPoint(){
+		if(!this.isNavigationModeOn()){return null;}
+		Integer nextIntersection = this.itinerary.peek();
+		if(nextIntersection == null){return null;}
+		
+		return Position.evaluateDistance(this.getCurrentPosition(), this.map.getIntersectionPosition(nextIntersection));
+	}
+	
+	/**
 	 * Calculates a unit vector pointing towards the next heading
 	 * If the GPS is not in navigation mode, the returned vector is null
 	 * @return A unit vector pointing towards the next heading
 	 */
-	private Vect calculateHeading(){
+	public Vect getHeading(){
 		if(!this.isNavigationModeOn()){return null;}
 		Integer nextIntersection = this.itinerary.peek();
 		if(nextIntersection == null){return null;}
@@ -163,10 +169,16 @@ public class GPS {
 		return closestIntersection;
 	}
 	
-	/*
-	 * GPSObserver
+	/**
+	 * @return The position of a random intersection in the map
 	 */
-	
+	public Position getRandomIntersectionPosition(){
+		ArrayList<Integer> intersections = this.map.getIntersections();
+		Random r = new Random();
+		Integer intersectionId = intersections.get(r.nextInt(intersections.size()));
+		return this.map.getIntersectionPosition(intersectionId);
+	}
+
 	/**
 	 * Subscribe an observer to the GPS notifications
 	 * @param o The observer
@@ -181,25 +193,6 @@ public class GPS {
 	public void notifyDestinationReached(){
 		for(GPSObserver o : this.observers){
 			o.onDestinationReached();
-		}
-	}
-	
-	/**
-	 * Notification sent to the observer after a way point (Intersection) is passed
-	 */
-	public void notifyWayPointPassed(){
-		for(GPSObserver o : this.observers){
-			o.onWayPointPassed();
-		}
-	}
-	
-	/**
-	 * Notification sent to the observer when the heading changes
-	 * @param newHeading
-	 */
-	public void notifyHeadingChanged(Vect newHeading){
-		for(GPSObserver o : this.observers){
-			o.onHeadingChanged(newHeading);
 		}
 	}
 	

@@ -30,4 +30,9 @@ public class Position {
 		if(d == null){return null;}
 		return Math.sqrt(d);
 	}
+	
+	public String toString(){
+		return "("+ x +","+ y +")";
+	}
+	
 }
