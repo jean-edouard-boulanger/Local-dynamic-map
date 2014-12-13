@@ -1,24 +1,27 @@
 package com.ldm.ui;
 
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
 import com.ldm.sma.agent.CarAgent;
+import com.ldm.ui.gps.GpsUI;
 
 import javafx.application.Application;
 import javafx.scene.Scene;
+import javafx.scene.canvas.Canvas;
+import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
 public class CarUI extends Application implements PropertyChangeListener {
 
-	private CarAgent carAgent;
-	
+	private CarAgent carAgent;	
 	private Stage PrimaryStage;
 
-	
 	@Override
 	public void start(Stage primaryStage) throws Exception {		
 		this.PrimaryStage = primaryStage;
@@ -31,8 +34,11 @@ public class CarUI extends Application implements PropertyChangeListener {
 		backgroundPane.setId("backgroundPane");
 		backgroundPane.getChildren().add(rootPane);
 		
-		Scene scene = new Scene(backgroundPane, 400, 400);
-		
+		GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
+		float width = gd.getDisplayMode().getWidth();
+		float height = gd.getDisplayMode().getHeight();
+		Scene scene = new Scene(backgroundPane, width * 0.8, height * 0.8);
+						
 		primaryStage.setScene(scene);
 		primaryStage.setResizable(true);
 		

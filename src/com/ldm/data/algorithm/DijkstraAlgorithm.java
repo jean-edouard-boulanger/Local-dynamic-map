@@ -1,5 +1,6 @@
 package com.ldm.data.algorithm;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -12,9 +13,9 @@ import com.ldm.model.RoadNetwork;
 
 public class DijkstraAlgorithm {
 
-	public List<Integer> compute(RoadNetwork g, Integer vd, Integer va) {
-		List<Integer> path = new LinkedList<>();
-		
+	public ArrayDeque<Integer> compute(RoadNetwork g, Integer vd, Integer va) {
+		ArrayDeque<Integer> path = new ArrayDeque<>();
+				
 		if(!g.containsAPath(vd, va)){
 			return null;
 		}
@@ -80,13 +81,11 @@ public class DijkstraAlgorithm {
 		
 		Integer currentNode = va;
 		while(currentNode != vd){
-			path.add(currentNode);
+			path.addFirst(currentNode);
 			currentNode = shortestPaths.get(currentNode).first;
 		}
-		path.add(vd);
-		
-		Collections.reverse(path);
-		
+		path.addFirst(vd);
+						
 		return path;
 	}
 

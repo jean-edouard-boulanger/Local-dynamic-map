@@ -13,7 +13,6 @@ public class RoadNetwork extends InMemoryGrph {
 	HashMap<Integer, Position> positions = new HashMap<>();
 	HashMap<Integer, Integer> speedLimits = new HashMap<>();
 	
-	
 	public void addRoad(int i0, int i1, int speedLimit){
 		if(!this.containsVertex(i0) || !this.containsVertex(i1)){
 			System.out.println("[WARNING@RoadNetwork] Can't add road, missing intersection " + i0 + " or " + i1);
@@ -44,6 +43,10 @@ public class RoadNetwork extends InMemoryGrph {
 		return this.getVertices().toIntegerArrayList();
 	}
 	
+	public boolean hasIntersection(int i){
+		return this.containsVertex(i);
+	}
+	
 	public void setRoadTravelTime(int r, double travelTime){
 		if(!this.containsEdge(r)){return;}
 		this.travelTimes.put(r, travelTime);	
@@ -72,5 +75,16 @@ public class RoadNetwork extends InMemoryGrph {
 	public Integer getRoadSpeedLimit(int e){
 		if(!this.containsEdge(e)){return null;}
 		return this.speedLimits.get(e);
+	}
+	
+	public Integer getRoad(int i0, int i1){
+		if(!this.hasRoad(i0, i1)){return null;}
+		int[] edges = this.getEdgesConnecting(i0, i1).toIntArray();
+		if(edges.length == 0){return null;}
+		return edges[0]; 
+	}
+	
+	public boolean hasRoad(int i0, int i1){
+		return this.getEdgesConnecting(i0, i1).size() > 0;
 	}
 }
