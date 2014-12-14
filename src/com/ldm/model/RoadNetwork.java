@@ -13,6 +13,7 @@ public class RoadNetwork extends InMemoryGrph {
 	HashMap<Integer, Double> travelTimes = new HashMap<>();
 	HashMap<Integer, Position> positions = new HashMap<>();
 	HashMap<Integer, Integer> speedLimits = new HashMap<>();
+	HashMap<Integer, Disruption> roadDisruptions = new HashMap<>();
 	
 	public void addRoad(int i0, int i1, int speedLimit){
 		if(!this.containsVertex(i0) || !this.containsVertex(i1)){
@@ -63,6 +64,11 @@ public class RoadNetwork extends InMemoryGrph {
 		return this.travelTimes.get(r);		
 	}
 	
+	public Double getRoadDistance(int i0, int i1){
+		if(!this.hasRoad(i0, i1)){return null;}
+		return Position.evaluateDistance(this.getIntersectionPosition(i0), this.getIntersectionPosition(i1));
+	}
+	
 	public void setIntersectionPosition(int v, Position p){
 		if(!this.containsVertex(v)){return;}
 		this.positions.put(v, p);
@@ -83,11 +89,29 @@ public class RoadNetwork extends InMemoryGrph {
 		return this.speedLimits.get(e);
 	}
 	
+	public Integer getRoadSpeedLimit(int r, double progress){
+		Integer usualSpeedLimit = this.getRoadSpeedLimit(r);
+		if(usualSpeedLimit == null){return null;}
+		Disruption drp = this.roadDisruptions.get(r);
+		if(drp == null){return usualSpeedLimit;}
+		
+		if(progress >= drp.getStartsAt() && progress < drp.getEndsAt()){
+			Double ms = usualSpeedLimit.doubleValue();
+			ms = ms - drp.getDisruptionLevel() * ms;
+			return ms.intValue();
+		}
+		return usualSpeedLimit;
+	}
+	
 	public Integer getRoad(int i0, int i1){
 		if(!this.hasRoad(i0, i1)){return null;}
 		int[] edges = this.getEdgesConnecting(i0, i1).toIntArray();
 		if(edges.length == 0){return null;}
 		return edges[0]; 
+	}
+	
+	public boolean hasRoad(int r){
+		return this.containsVertex(r);
 	}
 	
 	public boolean hasRoad(int i0, int i1){
