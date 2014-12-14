@@ -35,6 +35,11 @@ public class RoadNetwork extends InMemoryGrph {
 		return this.getEdges().toIntegerArrayList();
 	}
 	
+	public ArrayList<Integer> getOutNeighborIntersections(int i){
+		if(!this.hasIntersection(i)){return null;}
+		return this.getOutNeighbors(i).toIntegerArrayList();
+	}
+	
 	public void addIntersection(int i, Position p){
 		this.addVertex(i);
 		this.positions.put(i, p);

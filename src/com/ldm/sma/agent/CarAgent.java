@@ -32,7 +32,7 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 	
     private Position currentPosition = new Position();
     
-    private double currentSpeed = 90;
+    private double currentSpeed = 130;
     
     private GPS gps;
     
