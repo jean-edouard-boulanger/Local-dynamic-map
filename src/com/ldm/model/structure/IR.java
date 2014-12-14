@@ -80,6 +80,7 @@ public class IR {
     public boolean isTooOld()
     {        
         Date currentDate = new Date();
+        
         if (this.creationTimestamp.getTime() + this.IR_TIMEOUT > currentDate.getTime())
         {
             return true;
