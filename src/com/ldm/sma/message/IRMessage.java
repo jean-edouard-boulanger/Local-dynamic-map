@@ -4,7 +4,12 @@
  * and open the template in the editor.
  */
 package com.ldm.sma.message;
+import java.io.IOException;
+
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ldm.model.structure.IR;
+
 import jade.lang.acl.ACLMessage;
 
 /**
@@ -15,11 +20,15 @@ import jade.lang.acl.ACLMessage;
 public class IRMessage extends Message {
 
 	IR message;
-        
+    
+	public IRMessage(){
+		this.message = new IR();
+	}
+	
 	public IRMessage(IR message){
 		this.message = message;
 	}
-
+	
 	public IR getIR() {
 		return message;
 	}
@@ -31,6 +40,6 @@ public class IRMessage extends Message {
 	@Override
 	public boolean accept(MessageVisitor visitor, ACLMessage aclMsg) {
 		return visitor.onIRMessage(this, aclMsg);
-	}
+	}	
 }
 

@@ -22,14 +22,19 @@ import com.ldm.ui.WindowUI;
 import com.ldm.ui.WindowUI.carUIEventType;
 
 import jade.core.Agent;
+import jade.core.behaviours.Behaviour;
+import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.OneShotBehaviour;
+import jade.core.behaviours.SimpleBehaviour;
 import jade.gui.GuiEvent;
 
 import java.util.ArrayDeque;
 
 import jade.lang.acl.ACLMessage;
+import jade.lang.acl.MessageTemplate;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Iterator;
 
 public class CarAgent extends ShortRangeAgent implements GPSObserver {
@@ -42,6 +47,7 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
     private double currentSpeed = 500;
     
     private GPS gps;
+    private DL currentDL;
     
 	private PropertyChangeSupport propertyChangeCarAgent;
 	WindowUI carUI = null;
@@ -110,6 +116,14 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 	
 	@Override
 	public void onIntersectionPassed(Position intersectionPosition) {
+		Date date = new Date();
+		if(currentDL != null){
+			System.out.println("[Intersection passed save DL]");
+			this.currentDL.saveDL(intersectionPosition, date);
+			this.aggregateDL(currentDL);
+		}
+		System.out.println("[Intersection passed create new DL]");
+		this.currentDL = new DL(intersectionPosition, date);
 		
 	}
 	
@@ -138,7 +152,7 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 		
 	}
 	
-	public class HandleMessagesBehaviour extends OneShotBehaviour{
+	public class HandleMessagesBehaviour extends Behaviour{
 		
 		public HandleMessagesBehaviour(Agent agent){
 			super(agent);
@@ -146,13 +160,26 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 		
 		@Override
 		public void action() {
-                    AgentHelper.receiveMessageFromAround(CarAgent.this, null, new MessageVisitor(){
-                        public boolean onIRMessage(IRMessage message, ACLMessage aclMsg){
-                            aggregateIR(message.getIR());
-                            return true;
-                        }
-                    });		
+			ACLMessage m = receive();
+			if(m != null)
+				System.out.println(m.getContent());
+               boolean received = AgentHelper.receiveMessageFromAround(CarAgent.this, MessageTemplate.MatchPerformative(ACLMessage.INFORM), new MessageVisitor(){
+                    public boolean onIRMessage(IRMessage message, ACLMessage aclMsg){
+                        aggregateIR(message.getIR());
+                        System.out.println("[Receive message :] "+CarAgent.this.IRsCollection.toString());
+                        return true;
+                    }
+                });		
+               if(!received){
+            	   block();
+               }
 		}
+
+		@Override
+		public boolean done() {
+			return false;
+		}
+
 		
 	}
       
@@ -163,26 +190,29 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
     // ajout d'un nouveau IR en supprimant l'ancien si invalide
     public IR aggregateIR(IR newIR)
     {
+    	System.out.println("==========aggregateIR==============");
         Position pos1 = newIR.getPosDepart();
         Position pos2 = newIR.getPosArrivee();
         
         int ArrayPos = lookForIR(pos1, pos2);
-        IR returnedIR = this.IRsCollection.get(ArrayPos);
+        IR returnedIR = null;
         if ( ArrayPos == -1)
         {
             this.IRsCollection.add(newIR);
             returnedIR = newIR;
-            AgentHelper.sendMessageAround(this, ACLMessage.PROPAGATE,new IRMessage (newIR));
+            AgentHelper.sendMessageAround(this, ACLMessage.INFORM,new IRMessage (newIR));
         }
         else
         {
+        	
             if (this.IRsCollection.get(ArrayPos).isTooOld())
             {
                 this.IRsCollection.set(ArrayPos, newIR);
                 returnedIR = newIR;
-                AgentHelper.sendMessageAround(this, ACLMessage.PROPAGATE,new IRMessage (newIR));
+                AgentHelper.sendMessageAround(this, ACLMessage.INFORM,new IRMessage (newIR));
             }
         }
+        System.out.println("je suis IR man " +newIR.getAverageTime());
         return returnedIR;
     }
     
@@ -193,6 +223,10 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
         while(it.hasNext())
         {
             IR currentIR = it.next();
+            System.out.println("posD = " + posD);
+            System.out.println("posA = " + posA);
+            System.out.println("currentIR.getPosDepart() = " + currentIR.getPosDepart());
+            System.out.println("currentIR.getPosArrivee() = " + currentIR.getPosArrivee());
             if (currentIR.getPosDepart() == posD && currentIR.getPosArrivee() == posA)
             {
                 IROffset = IRsCollection.indexOf(currentIR);
@@ -204,6 +238,7 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
     
     public void aggregateDL(DL newDL)
     {
+    	System.out.println("==========aggregateDL==============");
         Position pos1 = newDL.getPosDepart();
         Position pos2 = newDL.getPosArrivee();
         
@@ -231,8 +266,11 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
             newIR = new IR(newDL.getPosDepart(), newDL.getPosArrivee(), newDL.getTpsParcours());
             this.IRsCollection.add(newIR);
         }
-        if (newIR!=null)
-            AgentHelper.sendMessageAround(this, ACLMessage.PROPAGATE,new IRMessage (newIR));
+        if (newIR!=null){
+        	System.out.println("[send IR]");
+            AgentHelper.sendMessageAround(this, ACLMessage.INFORM,new IRMessage (newIR));
+        }
+        System.out.println("je suis DL man " +newIR.getAverageTime());
     }
 	
 	@Override
