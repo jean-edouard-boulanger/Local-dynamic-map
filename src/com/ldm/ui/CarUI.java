@@ -26,21 +26,12 @@ public class CarUI extends Application implements PropertyChangeListener {
 	public void start(Stage primaryStage) throws Exception {		
 		this.PrimaryStage = primaryStage;
 		primaryStage.setTitle(this.carAgent.getLocalName());
-		
-		final Pane rootPane = new Pane();
-		rootPane.setId("root");
-		
-		final Pane backgroundPane = new Pane();
-		backgroundPane.setId("backgroundPane");
-		backgroundPane.getChildren().add(rootPane);
-		
+
 		GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
-		float width = gd.getDisplayMode().getWidth();
-		float height = gd.getDisplayMode().getHeight();
-		Scene scene = new Scene(backgroundPane, width * 0.8, height * 0.8);
+		primaryStage.setWidth(gd.getDisplayMode().getWidth() * 0.8);
+		primaryStage.setHeight(gd.getDisplayMode().getHeight() * 0.8);
 						
-		primaryStage.setScene(scene);
-		primaryStage.setResizable(true);
+		primaryStage.setResizable(false);
 		
 		primaryStage.show();
 	}

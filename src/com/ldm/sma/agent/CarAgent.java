@@ -89,7 +89,6 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 				javafx.application.Platform.runLater(new Runnable() {
 					@Override
 					public void run() {
-						System.out.println("Starting UI");
 						CarAgent.this.carUI = CarUI.startUI(CarAgent.this, propertyChangeCarAgent);
 					}
 				});
@@ -108,7 +107,7 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 	
 	@Override
 	public void onDestinationReached() {
-		
+		this.gps.setDestination(this.gps.getRandomIntersection());
 	}
 	
 	public class HandleMessagesBehaviour extends OneShotBehaviour{

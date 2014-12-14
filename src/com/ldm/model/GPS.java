@@ -42,9 +42,7 @@ public class GPS {
 	
 	public void setCurrentPosition(Position currentPosition){
 		this.currentPosition = currentPosition;
-		
-		System.out.println(currentPosition);
-		
+				
 		int closestIntersection = this.FindClosestIntersection();				
 		if(this.getDistanceToIntersection(closestIntersection) < reachDistanceThreshold){
 			if(this.lastIntersection == null || this.lastIntersection != closestIntersection){
@@ -55,13 +53,17 @@ public class GPS {
 			if(!this.isNavigationModeOn()){return;}
 			
 			if(closestIntersection != itinerary.peek()){return;}
-						
+			
 			this.itinerary.pop();
 			
 			if(this.itinerary.size() == 0){
 				this.notifyDestinationReached();
+			}
+			
+			if(this.itinerary.size() == 0){
 				this.navigationMode = false;
 			}
+			
 		}
 	}
 	
