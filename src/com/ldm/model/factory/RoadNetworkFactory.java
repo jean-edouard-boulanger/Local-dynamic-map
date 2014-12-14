@@ -20,6 +20,8 @@ public class RoadNetworkFactory {
 		
 		while((line = br.readLine()) != null){
 			
+			if(line.charAt(0) == '#'){continue;}
+			
 			if(line.equals("@ROAD@")){
 				mode = ImportMode.road;
 				continue;

@@ -42,7 +42,26 @@ public class GPS {
 		return this.currentPosition;
 	}
 	
+	public Double getCurrentMaximumSpeed(){
+		return this.currentMaximumSpeed;
+	}
+	
+	public Double getCurrentRoadProgess(){
+		if(this.itinerary == null){return null;}
+		if(this.lastIntersection == null){return null;}
+		if(this.itinerary.peek() == null){return null;}
+		if(this.lastIntersection == this.itinerary.peek()){return 1.0;}
+		
+		Double totalDistance = this.map.getRoadDistance(this.lastIntersection, this.itinerary.peek());
+		Double travelledDistance = Position.evaluateDistance(this.map.getIntersectionPosition(this.lastIntersection), this.currentPosition);
+		
+		return travelledDistance / totalDistance;
+	}
+	
 	public Integer getCurrentRoad(){
+		if(this.lastIntersection == null){return null;}
+		if(this.itinerary == null){return null;}
+		if(this.itinerary.peek() == null){return null;}
 		return map.getRoad(this.lastIntersection, this.itinerary.peek());
 	}
 	
@@ -50,7 +69,7 @@ public class GPS {
 		this.currentPosition = currentPosition;
 		
 		this.notifyPositionChanged(currentPosition);
-		
+				
 		int closestIntersection = this.FindClosestIntersection();				
 		if(this.getDistanceToIntersection(closestIntersection) < reachDistanceThreshold){
 			if(this.lastIntersection == null || this.lastIntersection != closestIntersection){
@@ -63,14 +82,15 @@ public class GPS {
 			if(closestIntersection != itinerary.peek()){return;}
 			
 			this.notifyWayPointPassed(this.itinerary.pop());
-						
-			if(this.itinerary.size() == 0){
-				this.notifyDestinationReached();
-			}else{
-				this.notifyRoadChanged(this.getCurrentRoad());
+			
+			Integer newRoad = this.getCurrentRoad();
+			if(newRoad != null){
+				this.notifyRoadChanged(newRoad);
 			}
 			
-			
+			if(this.itinerary.size() == 0){
+				this.notifyDestinationReached();
+			}
 			
 			if(this.itinerary.size() == 0){
 				this.navigationMode = false;
@@ -111,7 +131,7 @@ public class GPS {
 		if(lastIntersection == null){
 			lastIntersection = this.FindClosestIntersection();
 		}
-				
+		
 		System.out.println("[DEBUG@GPS@setDestination] Destination set: " + destination);
 		
 		this.itinerary = calculateItinerary(this.lastIntersection, destination);
