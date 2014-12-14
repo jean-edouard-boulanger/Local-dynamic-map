@@ -72,6 +72,10 @@ public class IR {
         return this.isTimout;
     }
     
+    public void updateAverage(Long l){
+        this.vehiculesNumber++;
+        this.averageTime = (this.getAverageTime() + l) / (this.getVehiculesNumber()); 
+    }
     
     public boolean isTooOld()
     {        
