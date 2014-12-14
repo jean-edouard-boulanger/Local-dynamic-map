@@ -114,7 +114,13 @@ public abstract class ShortRangeAgent extends GuiAgent {
 		received.setProtocol(null);
 		
 		Position sentAtPosition = getSentAtPosition(received);
-		if(sentAtPosition != null && range * range > Position.evaluateSquareDistance(this.getCurrentPosition(), sentAtPosition)){
+		
+		if(sentAtPosition == null){return null;}
+		
+		double distance = Position.evaluateDistance(this.getCurrentPosition(), sentAtPosition);
+		System.out.println("[DEBUG@"+ this.getLocalName() +"@receiveFromAround] " + distance);
+		
+		if(sentAtPosition != null && distance < range){
 			return received;
 		}
 		

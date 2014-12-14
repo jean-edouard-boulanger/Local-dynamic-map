@@ -17,11 +17,13 @@ import com.ldm.model.structure.IR;
 import com.ldm.sma.agent.helper.AgentHelper;
 import com.ldm.sma.message.IRMessage;
 import com.ldm.sma.message.MessageVisitor;
+import com.ldm.sma.message.PokeMessage;
 import com.ldm.sma.behaviour.DriveBehaviour;
 import com.ldm.ui.WindowUI;
 import com.ldm.ui.WindowUI.carUIEventType;
 
 import jade.core.Agent;
+import jade.core.behaviours.Behaviour;
 import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.OneShotBehaviour;
 import jade.core.behaviours.TickerBehaviour;
@@ -30,6 +32,7 @@ import jade.gui.GuiEvent;
 import java.util.ArrayDeque;
 
 import jade.lang.acl.ACLMessage;
+import jade.lang.acl.MessageTemplate;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -41,7 +44,7 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 	
     private Position currentPosition = new Position();
     
-    private double currentSpeed = 500;
+    private double currentSpeed = 50;
     
     private GPS gps;
     
@@ -88,6 +91,9 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 		
 		gps.subscribe(this);
 		
+		this.setCurrentPosition(this.gps.getMap().getIntersectionPosition(1));
+		this.gps.setDestination(2);
+		
 		SwingUtilities.invokeLater(new Runnable() {
 			@Override
 			public void run() {
@@ -103,12 +109,9 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 				
 		this.addBehaviour(new HandleMessagesBehaviour(this));
 		
-		this.addBehaviour(new SendPokeBehaviour(this, 2000));
+		this.addBehaviour(new SendPokeBehaviour(this, 10000));
 				
 		this.addBehaviour(new DriveBehaviour(this));
-		
-		this.setCurrentPosition(this.gps.getMap().getIntersectionPosition(1));
-		this.gps.setDestination(2);
 	}
 	
 	@Override
@@ -148,24 +151,33 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 
 		@Override
 		protected void onTick() {
-			CarAgent.this.sendAround(new ACLMessage(ACLMessage.INFORM));
 			System.out.println("[DEBUG@"+ this.myAgent.getLocalName() +"] Poke sent");
+			AgentHelper.sendMessageAround(CarAgent.this, ACLMessage.INFORM, new PokeMessage());
 		}
 	}
 	
-	public class HandleMessagesBehaviour extends OneShotBehaviour{
+	public class HandleMessagesBehaviour extends Behaviour{
 		public HandleMessagesBehaviour(Agent agent){
 			super(agent);
 		}
 		
 		@Override
 		public void action() {
-			ACLMessage msg = CarAgent.this.receiveFromAround();
-			if(msg == null){
+			boolean received = AgentHelper.receiveMessageFromAround(CarAgent.this, MessageTemplate.MatchPerformative(ACLMessage.INFORM), new MessageVisitor(){
+				public boolean onPokeMessage(PokeMessage message, ACLMessage aclMsg){
+					System.out.println("[DEBUG@"+ CarAgent.this.getLocalName() +"] Poke received from " + aclMsg.getSender() + " : " + message);
+					return true;
+				}
+			});
+			
+			if(!received){
 				block();
-			}else{
-				System.out.println("POKE RECEIVED");
 			}
+		}
+
+		@Override
+		public boolean done() {
+			return false;
 		}
 	}
       
