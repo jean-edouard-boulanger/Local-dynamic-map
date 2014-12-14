@@ -76,7 +76,7 @@ public class RoadNetwork extends InMemoryGrph {
 	
 	public Position getIntersectionPosition(int v){
 		if(!this.containsVertex(v)){return null;}
-		return this.positions.get(v);
+		return new Position(this.positions.get(v));
 	}
 	
 	public void setRoadSpeedLimit(int e, int speedLimit){

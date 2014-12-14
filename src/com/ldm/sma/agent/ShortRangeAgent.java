@@ -147,7 +147,7 @@ public abstract class ShortRangeAgent extends GuiAgent {
 		ObjectMapper mapper = new ObjectMapper();
 		try {
 			mapper.writeValue(sw, currentPosition);
-			m.addUserDefinedParameter(sentAtPositionParameterName, mapper.toString());
+			m.addUserDefinedParameter(sentAtPositionParameterName, sw.toString());
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

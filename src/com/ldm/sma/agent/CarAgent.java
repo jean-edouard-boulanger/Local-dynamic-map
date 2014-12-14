@@ -22,7 +22,9 @@ import com.ldm.ui.WindowUI;
 import com.ldm.ui.WindowUI.carUIEventType;
 
 import jade.core.Agent;
+import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.OneShotBehaviour;
+import jade.core.behaviours.TickerBehaviour;
 import jade.gui.GuiEvent;
 
 import java.util.ArrayDeque;
@@ -86,10 +88,6 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 		
 		gps.subscribe(this);
 		
-		this.setCurrentPosition(this.gps.getRandomIntersectionPosition());
-		
-		this.gps.setDestination(this.gps.getRandomIntersection());
-		
 		SwingUtilities.invokeLater(new Runnable() {
 			@Override
 			public void run() {
@@ -105,7 +103,12 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 				
 		this.addBehaviour(new HandleMessagesBehaviour(this));
 		
+		this.addBehaviour(new SendPokeBehaviour(this, 2000));
+				
 		this.addBehaviour(new DriveBehaviour(this));
+		
+		this.setCurrentPosition(this.gps.getMap().getIntersectionPosition(1));
+		this.gps.setDestination(2);
 	}
 	
 	@Override
@@ -120,7 +123,7 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 	
 	@Override
 	public void onDestinationReached() {
-		this.gps.setDestination(this.gps.getRandomIntersection());
+		//this.gps.setDestination(this.gps.getRandomIntersection());
 	}
 	
 	@Override
@@ -138,22 +141,32 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 		
 	}
 	
+	public class SendPokeBehaviour extends TickerBehaviour{
+		public SendPokeBehaviour(Agent a, long period) {
+			super(a, period);
+		}
+
+		@Override
+		protected void onTick() {
+			CarAgent.this.sendAround(new ACLMessage(ACLMessage.INFORM));
+			System.out.println("[DEBUG@"+ this.myAgent.getLocalName() +"] Poke sent");
+		}
+	}
+	
 	public class HandleMessagesBehaviour extends OneShotBehaviour{
-		
 		public HandleMessagesBehaviour(Agent agent){
 			super(agent);
 		}
 		
 		@Override
 		public void action() {
-                    AgentHelper.receiveMessageFromAround(CarAgent.this, null, new MessageVisitor(){
-                        public boolean onIRMessage(IRMessage message, ACLMessage aclMsg){
-                            aggregateIR(message.getIR());
-                            return true;
-                        }
-                    });		
+			ACLMessage msg = CarAgent.this.receiveFromAround();
+			if(msg == null){
+				block();
+			}else{
+				System.out.println("POKE RECEIVED");
+			}
 		}
-		
 	}
       
     public ArrayList<IR> getIRsCollection(){
