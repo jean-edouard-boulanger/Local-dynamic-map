@@ -6,13 +6,16 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.ldm.data.structure.Pair;
+import com.ldm.model.Disruption;
 import com.ldm.model.RoadNetwork;
 import com.ldm.model.geometry.Position;
+import com.ldm.model.geometry.Vect;
 
 import javafx.scene.Group;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
+import javafx.scene.shape.StrokeLineCap;
 
 public class NavigationMap extends Group {
 
@@ -20,6 +23,7 @@ public class NavigationMap extends Group {
 	
 	Map<Integer, Line> roads;
 	Map<Integer, Circle> intersections;
+	Map<Integer, Line> disruptions;
 	
 	ArrayDeque<Line> itinerary;
 	
@@ -45,6 +49,7 @@ public class NavigationMap extends Group {
 		this.roads = new HashMap<>();
 		this.intersections = new HashMap<>();
 		this.itinerary = new ArrayDeque<Line>();
+		this.disruptions = new HashMap<>();
 		
 		this.draw();
 	}
@@ -148,12 +153,36 @@ public class NavigationMap extends Group {
 				roadLine.setStrokeWidth(5);
 				roadLine.setStroke(Color.LIGHTGREY);
 				
-				this.roads.put(map.getRoad(inter, neighbor), roadLine);
+				Integer road  = map.getRoad(inter, neighbor);
+				this.roads.put(road, roadLine);
 				
 				this.getChildren().add(roadLine);
 				
+				Disruption d = this.map.getRoadDisruption(road);
+				if(d != null){
+					Vect u = new Vect(neighborPos.getX() - interPos.getX(), neighborPos.getY() - interPos.getY());
+					u.normalize();
+					double distance = Position.evaluateDistance(neighborPos, interPos);
+					
+					double startFactor = distance * d.getStartsAt();
+					double endFactor = distance * d.getEndsAt();
+					
+					Position startLinePos = interPos.getAddedTo(u.getMultipliedBy(startFactor));
+					Position endLinePos = interPos.getAddedTo(u.getMultipliedBy(endFactor));
+					
+					Line disruptionLine = new Line(startLinePos.getX(), startLinePos.getY(), endLinePos.getX(), endLinePos.getY());
+					disruptionLine.setStroke(Color.RED);
+					disruptionLine.setStrokeWidth(9);
+					disruptionLine.setStrokeLineCap(StrokeLineCap.ROUND);
+					
+					this.getChildren().add(disruptionLine);
+					this.disruptions.put(road, disruptionLine);					
+				}
 			}
-			
+		}
+		
+		for(Line l : this.disruptions.values()){
+			l.toFront();
 		}
 		
 		this.getChildren().add(this.car);

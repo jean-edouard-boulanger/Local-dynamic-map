@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 
+import com.ldm.model.Disruption;
 import com.ldm.model.RoadNetwork;
 import com.ldm.model.geometry.Position;
 
@@ -30,6 +31,10 @@ public class RoadNetworkFactory {
 				mode = ImportMode.intersection;
 				continue;
 			}
+			else if(line.equals("@DISRUPTION@")){
+				mode = ImportMode.disruption;
+				continue;
+			}
 			
 			String[] attrs = line.split(":");
 			
@@ -48,6 +53,15 @@ public class RoadNetworkFactory {
 				Position position = new Position(Float.parseFloat(attrs[1]), Float.parseFloat(attrs[2]));
 				
 				map.addIntersection(id, position);
+			}
+			else if(mode == ImportMode.disruption){
+				Integer id0 = Integer.parseInt(attrs[0]);
+				Integer id1 = Integer.parseInt(attrs[1]);
+				Double startsAt = Double.parseDouble(attrs[2]);
+				Double endsAt = Double.parseDouble(attrs[3]);
+				Double disruptionLevel = Double.parseDouble(attrs[4]);
+				
+				map.addRoadDisruption(id0, id1, new Disruption(startsAt, endsAt, disruptionLevel));
 			}
 		}
 		br.close();

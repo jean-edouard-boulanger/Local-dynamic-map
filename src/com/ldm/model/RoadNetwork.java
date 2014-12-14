@@ -84,14 +84,17 @@ public class RoadNetwork extends InMemoryGrph {
 		this.speedLimits.put(e, speedLimit);
 	}
 	
-	public Integer getRoadSpeedLimit(int e){
-		if(!this.containsEdge(e)){return null;}
-		return this.speedLimits.get(e);
+	public Integer getRoadSpeedLimit(Integer r){
+		if(r == null){return null;}
+		if(!this.containsEdge(r)){return null;}
+		return this.speedLimits.get(r);
 	}
 	
-	public Integer getRoadSpeedLimit(int r, double progress){
+	public Integer getRoadSpeedLimit(Integer r, Double progress){
 		Integer usualSpeedLimit = this.getRoadSpeedLimit(r);
 		if(usualSpeedLimit == null){return null;}
+		if(progress == null){return usualSpeedLimit;}
+		
 		Disruption drp = this.roadDisruptions.get(r);
 		if(drp == null){return usualSpeedLimit;}
 		
@@ -103,6 +106,34 @@ public class RoadNetwork extends InMemoryGrph {
 		return usualSpeedLimit;
 	}
 	
+	public void addRoadDisruption(int i0, int i1, Disruption d){
+		Integer r = this.getRoad(i0, i1);
+		this.addRoadDisruption(r, d);
+	}
+	
+	public void addRoadDisruption(Integer r, Disruption d){
+		if(r == null){return;}
+		if(!this.hasRoad(r)){return;}
+		this.roadDisruptions.put(r, d);
+	}
+	
+	public boolean hasDisruption(Integer r){
+		if(r == null){return false;}
+		if(!this.hasRoad(r)){return false;}
+		return this.roadDisruptions.containsKey(r);
+	}
+	
+	public Disruption getRoadDisruption(int i0, int i1){
+		Integer road = this.getRoad(i0, i1);
+		return this.getRoadDisruption(road);
+	}
+	
+	public Disruption getRoadDisruption(Integer r){
+		if(r == null){return null;}
+		if(!this.hasRoad(r)){return null;}
+		return this.roadDisruptions.get(r);
+	}
+		
 	public Integer getRoad(int i0, int i1){
 		if(!this.hasRoad(i0, i1)){return null;}
 		int[] edges = this.getEdgesConnecting(i0, i1).toIntArray();
@@ -111,7 +142,7 @@ public class RoadNetwork extends InMemoryGrph {
 	}
 	
 	public boolean hasRoad(int r){
-		return this.containsVertex(r);
+		return this.containsEdge(r);
 	}
 	
 	public boolean hasRoad(int i0, int i1){

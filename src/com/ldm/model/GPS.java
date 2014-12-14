@@ -16,7 +16,7 @@ public class GPS {
 	private RoadNetwork map = new RoadNetwork();	
 	private Position currentPosition = new Position();
 	
-	private double currentMaximumSpeed = 0.0;
+	private Double currentMaximumSpeed = 0.0;
 	
 	private boolean navigationMode;
 	
@@ -70,6 +70,8 @@ public class GPS {
 		
 		this.notifyPositionChanged(currentPosition);
 				
+		//System.out.println("Speed limit: " + this.map.getRoadSpeedLimit(this.getCurrentRoad(), this.getCurrentRoadProgess()));
+		
 		int closestIntersection = this.FindClosestIntersection();				
 		if(this.getDistanceToIntersection(closestIntersection) < reachDistanceThreshold){
 			if(this.lastIntersection == null || this.lastIntersection != closestIntersection){

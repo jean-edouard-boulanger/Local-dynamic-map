@@ -29,6 +29,10 @@ public class Position {
 		return this;
 	}
 	
+	public Position getAddedTo(Vect u){
+		return new Position(this.x + u.dx, this.y + u.dy);
+	}
+	
 	public static Double evaluateSquareDistance(Position p1, Position p2){
 		if(p1 == null || p2 == null){return null;}
 		
