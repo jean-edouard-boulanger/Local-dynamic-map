@@ -15,8 +15,8 @@ import com.ldm.model.geometry.Position;
 import com.ldm.model.structure.DL;
 import com.ldm.model.structure.IR;
 import com.ldm.sma.behaviour.DriveBehaviour;
-import com.ldm.ui.CarUI;
-import com.ldm.ui.CarUI.carUIEventType;
+import com.ldm.ui.WindowUI;
+import com.ldm.ui.WindowUI.carUIEventType;
 
 import jade.core.Agent;
 import jade.core.behaviours.OneShotBehaviour;
@@ -37,7 +37,7 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
     private GPS gps;
     
 	private PropertyChangeSupport propertyChangeCarAgent;
-	CarUI carUI = null;
+	WindowUI carUI = null;
 		
 	public CarAgent(){
 		super();
@@ -90,7 +90,7 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 				javafx.application.Platform.runLater(new Runnable() {
 					@Override
 					public void run() {
-						CarAgent.this.carUI = CarUI.startUI(CarAgent.this, propertyChangeCarAgent);
+						CarAgent.this.carUI = WindowUI.startUI(CarAgent.this, propertyChangeCarAgent);
 					}
 				});
 			}
