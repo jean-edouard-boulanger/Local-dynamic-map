@@ -14,19 +14,21 @@ import com.ldm.model.factory.RoadNetworkFactory;
 import com.ldm.model.geometry.Position;
 import com.ldm.model.structure.DL;
 import com.ldm.model.structure.IR;
-
 import com.ldm.sma.agent.helper.AgentHelper;
 import com.ldm.sma.message.IRMessage;
 import com.ldm.sma.message.MessageVisitor;
 import com.ldm.sma.behaviour.DriveBehaviour;
 import com.ldm.ui.WindowUI;
 import com.ldm.ui.WindowUI.carUIEventType;
+
 import jade.core.Agent;
 import jade.core.behaviours.OneShotBehaviour;
 import jade.gui.GuiEvent;
 
 import java.util.ArrayDeque;
+
 import jade.lang.acl.ACLMessage;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -127,8 +129,13 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 	}
 	
 	@Override
-	public void onWayPointPassed(int wayPoint){
+	public void onWayPointPassed(Integer wayPoint){
 		propertyChangeCarAgent.firePropertyChange(carUIEventType.wayPointPassed.toString() , null, wayPoint);
+	}
+	
+	@Override
+	public void onRoadChanged(Integer road){
+		
 	}
 	
 	public class HandleMessagesBehaviour extends OneShotBehaviour{

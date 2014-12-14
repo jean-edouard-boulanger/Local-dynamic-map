@@ -15,6 +15,8 @@ public interface GPSObserver {
 	
 	public void onItinerarySet(ArrayDeque<Integer> itinerary);
 	
-	public void onWayPointPassed(int intersection);
+	public void onWayPointPassed(Integer intersection);
+	
+	public void onRoadChanged(Integer road);
 	
 }

@@ -55,7 +55,7 @@ public class WindowUI extends Application implements PropertyChangeListener {
 	}
 
 	@Override
-	public void propertyChange(PropertyChangeEvent evt) {
+	public void propertyChange(final PropertyChangeEvent evt) {
 		
 		/**
 		 * Event fired when the car moves.

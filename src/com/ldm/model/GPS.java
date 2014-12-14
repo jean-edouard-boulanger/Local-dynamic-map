@@ -16,6 +16,8 @@ public class GPS {
 	private RoadNetwork map = new RoadNetwork();	
 	private Position currentPosition = new Position();
 	
+	private double currentMaximumSpeed = 0.0;
+	
 	private boolean navigationMode;
 	
 	private ArrayList<GPSObserver> observers = new ArrayList<>();
@@ -40,6 +42,10 @@ public class GPS {
 		return this.currentPosition;
 	}
 	
+	public Integer getCurrentRoad(){
+		return map.getRoad(this.lastIntersection, this.itinerary.peek());
+	}
+	
 	public void setCurrentPosition(Position currentPosition){
 		this.currentPosition = currentPosition;
 		
@@ -57,10 +63,14 @@ public class GPS {
 			if(closestIntersection != itinerary.peek()){return;}
 			
 			this.notifyWayPointPassed(this.itinerary.pop());
-			
+						
 			if(this.itinerary.size() == 0){
 				this.notifyDestinationReached();
+			}else{
+				this.notifyRoadChanged(this.getCurrentRoad());
 			}
+			
+			
 			
 			if(this.itinerary.size() == 0){
 				this.navigationMode = false;
@@ -229,9 +239,16 @@ public class GPS {
 		}
 	}
 	
-	public void notifyWayPointPassed(int intersection){
+	public void notifyWayPointPassed(Integer intersection){
 		for(GPSObserver o : this.observers){
 			o.onWayPointPassed(intersection);
+		}
+	}
+	
+	public void notifyRoadChanged(Integer road){
+		System.out.println("[DEBUG@GPS@setCurrentPosition] notifyRoadChanged: " + road);
+		for(GPSObserver o : this.observers){
+			o.onRoadChanged(road);
 		}
 	}
 	
