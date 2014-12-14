@@ -1,5 +1,6 @@
 package com.ldm.ui.components;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -16,8 +17,12 @@ import javafx.scene.shape.Line;
 public class NavigationMap extends Group {
 
 	final RoadNetwork map;
+	
 	Map<Integer, Line> roads;
 	Map<Integer, Circle> intersections;
+	
+	ArrayDeque<Line> itinerary;
+	
 	Car car;
 	
 	private double height;
@@ -39,6 +44,7 @@ public class NavigationMap extends Group {
 		this.car = new Car();
 		this.roads = new HashMap<>();
 		this.intersections = new HashMap<>();
+		this.itinerary = new ArrayDeque<Line>();
 		
 		this.draw();
 	}
@@ -62,7 +68,59 @@ public class NavigationMap extends Group {
 	 * @param p
 	 */
 	public void setCarPosition(Position p){
-		this.car.setPosition(this.getScaledPosition(p));
+		Position newPosition = this.getScaledPosition(p);
+		this.car.setPosition(newPosition);
+		
+		if(!this.itinerary.isEmpty()){
+			this.itinerary.peek().setStartX(newPosition.getX());
+			this.itinerary.peek().setStartY(newPosition.getY());
+		}
+		
+		this.car.toFront();
+	}
+	
+	public void clearItinerary(){
+		for(Line l : this.itinerary){
+			this.getChildren().remove(l);
+		}
+		this.itinerary.clear();
+	}
+	
+	public void setItinerary(ArrayDeque<Integer> itinerary){
+				
+		this.clearItinerary();
+		
+		int currentIntersection = itinerary.pop();
+		Position intPos = this.getScaledPosition(map.getIntersectionPosition(currentIntersection));
+		
+		Line firstLine = new Line(car.getCurrentPosition().getX(), car.getCurrentPosition().getY(), intPos.getX(), intPos.getY());
+		firstLine.setStroke(Color.CADETBLUE);
+		firstLine.setStrokeWidth(3);
+		this.itinerary.addLast(firstLine);
+		this.getChildren().add(firstLine);
+		
+		while(!itinerary.isEmpty()){
+			int nextIntersection = itinerary.pop();
+			
+			Position i0pos = this.getScaledPosition(map.getIntersectionPosition(currentIntersection));
+			Position i1pos = this.getScaledPosition(map.getIntersectionPosition(nextIntersection));
+			
+			Line itinerarySubLine = new Line(i0pos.getX(), i0pos.getY(), i1pos.getX(), i1pos.getY());
+			itinerarySubLine.setStroke(Color.CADETBLUE);
+			itinerarySubLine.setStrokeWidth(3);
+			
+			this.itinerary.addLast(itinerarySubLine);
+			this.getChildren().add(itinerarySubLine);
+			
+			currentIntersection = nextIntersection;
+		}
+		this.car.toFront();
+	}
+	
+	public void popNextWayPoint(){
+		if(!this.itinerary.isEmpty()){
+			this.getChildren().remove(this.itinerary.pop());
+		}
 	}
 	
 	/**
@@ -74,7 +132,7 @@ public class NavigationMap extends Group {
 		for(int inter : inters){
 			Position interPos = getScaledPosition(map.getIntersectionPosition(inter));
 			
-			Circle interCircle = new Circle(interPos.getX(), interPos.getY(), 7);
+			Circle interCircle = new Circle(interPos.getX(), interPos.getY(), 4);
 			interCircle.setFill(Color.LIGHTGREY);
 			this.getChildren().add(interCircle);
 			
@@ -87,10 +145,13 @@ public class NavigationMap extends Group {
 				Position neighborPos = getScaledPosition(this.map.getIntersectionPosition(neighbor));
 				
 				Line roadLine = new Line(interPos.getX(), interPos.getY(), neighborPos.getX(), neighborPos.getY());
-				roadLine.setStrokeWidth(10);
+				roadLine.setStrokeWidth(5);
 				roadLine.setStroke(Color.LIGHTGREY);
 				
+				this.roads.put(map.getRoad(inter, neighbor), roadLine);
+				
 				this.getChildren().add(roadLine);
+				
 			}
 			
 		}

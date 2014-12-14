@@ -5,38 +5,34 @@ import java.awt.GraphicsEnvironment;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.util.ArrayDeque;
 
-import com.ldm.data.structure.Pair;
 import com.ldm.model.geometry.Position;
 import com.ldm.sma.agent.CarAgent;
-import com.ldm.ui.components.Car;
 import com.ldm.ui.components.NavigationMap;
 
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.scene.Group;
 import javafx.scene.Scene;
-import javafx.scene.canvas.Canvas;
-import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.layout.Pane;
-import javafx.scene.paint.Color;
-import javafx.scene.shape.Circle;
 import javafx.stage.Stage;
 
 public class WindowUI extends Application implements PropertyChangeListener {
 
 	public enum carUIEventType{
-		carMoved
+		carMoved,
+		itinerarySet,
+		wayPointPassed
 	}
 	
 	private CarAgent carAgent;
-	private Stage PrimaryStage;
+	private Stage primaryStage;
 
 	NavigationMap navigationMap;
 	
 	@Override
 	public void start(Stage primaryStage) throws Exception {		
-		this.PrimaryStage = primaryStage;
+		this.primaryStage = primaryStage;
 		primaryStage.setTitle(this.carAgent.getLocalName());
 		primaryStage.setResizable(false);
 		
@@ -71,6 +67,22 @@ public class WindowUI extends Application implements PropertyChangeListener {
 					Position newPosition = (Position)evt.getNewValue();
 								
 					navigationMap.setCarPosition(newPosition);
+				}
+			});
+		}
+		else if(evt.getPropertyName().equals(carUIEventType.itinerarySet.toString())){
+			Platform.runLater(new Runnable(){
+				@Override
+				public void run() {
+					navigationMap.setItinerary((ArrayDeque<Integer>)evt.getNewValue());
+				}
+			});
+		}
+		else if(evt.getPropertyName().equals(carUIEventType.wayPointPassed.toString())){
+			Platform.runLater(new Runnable(){
+				@Override
+				public void run() {
+					navigationMap.popNextWayPoint();
 				}
 			});
 		}

@@ -22,6 +22,7 @@ import jade.core.Agent;
 import jade.core.behaviours.OneShotBehaviour;
 import jade.gui.GuiEvent;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -32,7 +33,7 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 	
     private Position currentPosition = new Position();
     
-    private double currentSpeed = 130;
+    private double currentSpeed = 500;
     
     private GPS gps;
     
@@ -114,6 +115,16 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 	@Override
 	public void onDestinationReached() {
 		this.gps.setDestination(this.gps.getRandomIntersection());
+	}
+	
+	@Override
+	public void onItinerarySet(ArrayDeque<Integer> itinerary){
+		propertyChangeCarAgent.firePropertyChange(carUIEventType.itinerarySet.toString() , null, itinerary);
+	}
+	
+	@Override
+	public void onWayPointPassed(int wayPoint){
+		propertyChangeCarAgent.firePropertyChange(carUIEventType.wayPointPassed.toString() , null, wayPoint);
 	}
 	
 	public class HandleMessagesBehaviour extends OneShotBehaviour{

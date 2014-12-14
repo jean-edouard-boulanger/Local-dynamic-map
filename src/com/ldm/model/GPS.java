@@ -56,7 +56,7 @@ public class GPS {
 			
 			if(closestIntersection != itinerary.peek()){return;}
 			
-			this.itinerary.pop();
+			this.notifyWayPointPassed(this.itinerary.pop());
 			
 			if(this.itinerary.size() == 0){
 				this.notifyDestinationReached();
@@ -65,7 +65,6 @@ public class GPS {
 			if(this.itinerary.size() == 0){
 				this.navigationMode = false;
 			}
-			
 		}
 	}
 	
@@ -107,8 +106,9 @@ public class GPS {
 		
 		this.itinerary = calculateItinerary(this.lastIntersection, destination);
 		
-		if(this.itinerary != null){
-			System.out.println("[DEBUG@GPS@setDestination] Itinerary set: " + this.itinerary);
+		if(this.itinerary != null){			
+			this.notifyItinerarySet(itinerary);
+			
 			this.startNavigation();
 		}
 	}
@@ -216,8 +216,8 @@ public class GPS {
 	/**
 	 * Notification sent to the observer when an intersection is passed
 	 */
-	public void notifyIntersectionPassed(Integer intersection){
-		System.out.println("[DEBUG@GPS@setCurrentPosition] notifyIntersectionPassed");
+	public void notifyIntersectionPassed(int intersection){
+		System.out.println("[DEBUG@GPS@setCurrentPosition] notifyIntersectionPassed: " + intersection);
 		for(GPSObserver o : this.observers){
 			o.onIntersectionPassed(new Position(map.getIntersectionPosition(intersection)));
 		}
@@ -225,7 +225,21 @@ public class GPS {
 	
 	public void notifyPositionChanged(Position newPosition){
 		for(GPSObserver o : this.observers){
-			o.onPositionChanged(newPosition);
+			o.onPositionChanged(new Position(newPosition));
 		}
 	}
+	
+	public void notifyWayPointPassed(int intersection){
+		for(GPSObserver o : this.observers){
+			o.onWayPointPassed(intersection);
+		}
+	}
+	
+	public void notifyItinerarySet(ArrayDeque<Integer> itinerary){
+		System.out.println("[DEBUG@GPS@setCurrentPosition] notifyItinerarySet: " + itinerary);
+		for(GPSObserver o : this.observers){
+			o.onItinerarySet(new ArrayDeque<Integer>(itinerary));
+		}
+	}
+	
 }
