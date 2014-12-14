@@ -3,6 +3,7 @@ package com.ldm.model;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import com.ldm.data.structure.Pair;
 import com.ldm.model.geometry.Position;
 
 import grph.in_memory.InMemoryGrph;
@@ -32,6 +33,11 @@ public class RoadNetwork extends InMemoryGrph {
 	
 	public ArrayList<Integer> getRoads(){
 		return this.getEdges().toIntegerArrayList();
+	}
+	
+	public ArrayList<Integer> getOutNeighborIntersections(int i){
+		if(!this.hasIntersection(i)){return null;}
+		return this.getOutNeighbors(i).toIntegerArrayList();
 	}
 	
 	public void addIntersection(int i, Position p){
@@ -86,5 +92,21 @@ public class RoadNetwork extends InMemoryGrph {
 	
 	public boolean hasRoad(int i0, int i1){
 		return this.getEdgesConnecting(i0, i1).size() > 0;
+	}
+	
+	public Pair<Position, Position> getExtremePositions(){
+		Position lowest = new Position(Double.MAX_VALUE, Double.MAX_VALUE);
+		Position highest = new Position(Double.MIN_VALUE, Double.MIN_VALUE);
+		
+		ArrayList<Integer> intersections = this.getIntersections();
+		for(int i : intersections){
+			Position intersectionPosition = this.getIntersectionPosition(i);
+			if(intersectionPosition.getX() < lowest.getX()){lowest.setX(intersectionPosition.getX());}
+			if(intersectionPosition.getY() < lowest.getY()){lowest.setY(intersectionPosition.getY());}
+			
+			if(intersectionPosition.getX() > highest.getX()){highest.setX(intersectionPosition.getX());}
+			if(intersectionPosition.getY() > highest.getY()){highest.setY(intersectionPosition.getY());}
+		}
+		return new Pair<Position, Position>(lowest, highest);
 	}
 }

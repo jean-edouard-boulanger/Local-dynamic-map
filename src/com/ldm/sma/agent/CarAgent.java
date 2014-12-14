@@ -1,20 +1,26 @@
 package com.ldm.sma.agent;
 
 import java.beans.PropertyChangeSupport;
+import java.io.File;
+import java.io.IOException;
 
 import javafx.embed.swing.JFXPanel;
 
 import javax.swing.SwingUtilities;
 
+import com.ldm.model.GPS;
 import com.ldm.model.GPSObserver;
+import com.ldm.model.factory.RoadNetworkFactory;
 import com.ldm.model.geometry.Position;
 import com.ldm.model.structure.DL;
 import com.ldm.model.structure.IR;
+
 import com.ldm.sma.agent.helper.AgentHelper;
 import com.ldm.sma.message.IRMessage;
 import com.ldm.sma.message.MessageVisitor;
-import com.ldm.ui.CarUI;
-
+import com.ldm.sma.behaviour.DriveBehaviour;
+import com.ldm.ui.WindowUI;
+import com.ldm.ui.WindowUI.carUIEventType;
 import jade.core.Agent;
 import jade.core.behaviours.OneShotBehaviour;
 import jade.gui.GuiEvent;
@@ -25,25 +31,60 @@ import java.util.Iterator;
 public class CarAgent extends ShortRangeAgent implements GPSObserver {
     
     // Tableau stockant les différents IR valides d'un véhicule
-    private ArrayList<IR> IRsCollection = new ArrayList();
+    private ArrayList<IR> IRsCollection = new ArrayList<>();
 	
+    private Position currentPosition = new Position();
+    
+    private double currentSpeed = 130;
+    
+    private GPS gps;
+    
 	private PropertyChangeSupport propertyChangeCarAgent;
-	CarUI carUI = null;
+	WindowUI carUI = null;
 		
 	public CarAgent(){
 		super();
 		propertyChangeCarAgent = new PropertyChangeSupport(this);
 	}
 	
+	public GPS getGPS(){
+		return this.gps;
+	}
+	
 	@Override
 	public Position getCurrentPosition(){
-		// Temporaire, a modifier
-		return new Position(0.0, 0.0);
+		return this.currentPosition;
+	}
+	
+	public void setCurrentPosition(Position p){		
+		this.currentPosition = p;
+		this.gps.setCurrentPosition(p);
+	}
+	
+	public double getCurrentSpeed(){
+		return this.currentSpeed;
+	}
+	
+	public void setCurrentSpeed(double currentSpeed){
+		this.currentSpeed = currentSpeed;
 	}
 	
 	@Override
 	public void setup(){
 		super.setup();
+		
+		File mapFile = new File("gps.map");
+		try {
+			this.gps = new GPS(RoadNetworkFactory.BuildFromFile(mapFile));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		gps.subscribe(this);
+		
+		this.setCurrentPosition(this.gps.getRandomIntersectionPosition());
+		
+		this.gps.setDestination(this.gps.getRandomIntersection());
 		
 		SwingUtilities.invokeLater(new Runnable() {
 			@Override
@@ -52,14 +93,15 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 				javafx.application.Platform.runLater(new Runnable() {
 					@Override
 					public void run() {
-						System.out.println("Starting UI");
-						CarAgent.this.carUI = CarUI.startUI(CarAgent.this, propertyChangeCarAgent);
+						CarAgent.this.carUI = WindowUI.startUI(CarAgent.this, propertyChangeCarAgent);
 					}
 				});
 			}
 		});
 				
 		this.addBehaviour(new HandleMessagesBehaviour(this));
+		
+		this.addBehaviour(new DriveBehaviour(this));
 	}
 	
 	@Override
@@ -68,8 +110,13 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 	}
 	
 	@Override
+	public void onPositionChanged(Position newPosition) {
+		propertyChangeCarAgent.firePropertyChange(carUIEventType.carMoved.toString() , null, newPosition);
+	}
+	
+	@Override
 	public void onDestinationReached() {
-		
+		this.gps.setDestination(this.gps.getRandomIntersection());
 	}
 	
 	public class HandleMessagesBehaviour extends OneShotBehaviour{
