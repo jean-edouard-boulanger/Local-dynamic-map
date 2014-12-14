@@ -98,6 +98,10 @@ public abstract class ShortRangeAgent extends GuiAgent {
 	}
 	
 	public ACLMessage receiveFromAround(MessageTemplate pattern){
+		if(pattern == null){
+			pattern = MessageTemplate.MatchAll();
+		}
+		
 		ACLMessage received = this.receive(MessageTemplate.and(pattern, filterDistanceProtocol));
 		if(received == null){
 			return null;
