@@ -20,11 +20,11 @@ public class IRMessage extends Message {
 		this.message = message;
 	}
 
-	public IR getMessage() {
+	public IR getIR() {
 		return message;
 	}
 
-	public void setMessage(IR message) {
+	public void setIR(IR message) {
 		this.message = message;
 	}
 

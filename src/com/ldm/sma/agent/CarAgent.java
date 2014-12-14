@@ -129,7 +129,7 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 		public void action() {
                     AgentHelper.receiveMessageFromAround(CarAgent.this, null, new MessageVisitor(){
                         public boolean onIRMessage(IRMessage message, ACLMessage aclMsg){
-                            aggregateIR(message.getMessage());
+                            aggregateIR(message.getIR());
                             return true;
                         }
                     });		
