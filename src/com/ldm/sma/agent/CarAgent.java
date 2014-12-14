@@ -16,6 +16,7 @@ import com.ldm.model.structure.DL;
 import com.ldm.model.structure.IR;
 import com.ldm.sma.behaviour.DriveBehaviour;
 import com.ldm.ui.CarUI;
+import com.ldm.ui.CarUI.carUIEventType;
 
 import jade.core.Agent;
 import jade.core.behaviours.OneShotBehaviour;
@@ -31,7 +32,7 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 	
     private Position currentPosition = new Position();
     
-    private double currentSpeed = 20;
+    private double currentSpeed = 90;
     
     private GPS gps;
     
@@ -103,6 +104,11 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 	@Override
 	public void onIntersectionPassed(Position intersectionPosition) {
 		
+	}
+	
+	@Override
+	public void onPositionChanged(Position newPosition) {
+		propertyChangeCarAgent.firePropertyChange(carUIEventType.carMoved.toString() , null, newPosition);
 	}
 	
 	@Override

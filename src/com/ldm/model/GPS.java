@@ -11,7 +11,7 @@ import com.ldm.model.geometry.Vect;
 
 public class GPS {
 	
-	private static final Double reachDistanceThreshold = 50.0;
+	private static final Double reachDistanceThreshold = 10.0;
 	
 	private RoadNetwork map = new RoadNetwork();	
 	private Position currentPosition = new Position();
@@ -42,7 +42,9 @@ public class GPS {
 	
 	public void setCurrentPosition(Position currentPosition){
 		this.currentPosition = currentPosition;
-				
+		
+		this.notifyPositionChanged(currentPosition);
+		
 		int closestIntersection = this.FindClosestIntersection();				
 		if(this.getDistanceToIntersection(closestIntersection) < reachDistanceThreshold){
 			if(this.lastIntersection == null || this.lastIntersection != closestIntersection){
@@ -217,7 +219,13 @@ public class GPS {
 	public void notifyIntersectionPassed(Integer intersection){
 		System.out.println("[DEBUG@GPS@setCurrentPosition] notifyIntersectionPassed");
 		for(GPSObserver o : this.observers){
-			o.onIntersectionPassed(map.getIntersectionPosition(intersection));
+			o.onIntersectionPassed(new Position(map.getIntersectionPosition(intersection)));
+		}
+	}
+	
+	public void notifyPositionChanged(Position newPosition){
+		for(GPSObserver o : this.observers){
+			o.onPositionChanged(newPosition);
 		}
 	}
 }
