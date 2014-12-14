@@ -16,10 +16,8 @@ public class DriveBehaviour extends TickerBehaviour {
 
 	@Override
 	protected void onTick() {		
-		if(myCarAgent().getGPS().isNavigationModeOn()){
-			myCarAgent().setCurrentSpeed(50);
-			
-			Vect dx = myCarAgent().getGPS().getHeading().mult(myCarAgent().getCurrentSpeed());
+		if(myCarAgent().getGPS().isNavigationModeOn()){			
+			Vect dx = myCarAgent().getGPS().getHeading().mult(UnitHelper.kmhTOms(myCarAgent().getCurrentSpeed()));
 			myCarAgent().setCurrentPosition(myCarAgent().getCurrentPosition().add(dx));	
 		}
 	}

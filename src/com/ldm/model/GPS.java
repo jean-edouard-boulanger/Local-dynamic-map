@@ -48,8 +48,7 @@ public class GPS {
 		int closestIntersection = this.FindClosestIntersection();				
 		if(this.getDistanceToIntersection(closestIntersection) < reachDistanceThreshold){
 			if(this.lastIntersection == null || this.lastIntersection != closestIntersection){
-				this.lastIntersection = closestIntersection;
-				System.out.println("[DEBUG@GPS@setCurrentPosition] notifyIntersectionPassed");
+				this.lastIntersection = closestIntersection;				
 				this.notifyIntersectionPassed(closestIntersection);
 			}
 			
@@ -204,6 +203,7 @@ public class GPS {
 	 * Notification sent to the observer after the destination is reached
 	 */
 	public void notifyDestinationReached(){
+		System.out.println("[DEBUG@GPS@setCurrentPosition] notifyDestinationReached");
 		for(GPSObserver o : this.observers){
 			o.onDestinationReached();
 		}
@@ -211,9 +211,9 @@ public class GPS {
 	
 	/**
 	 * Notification sent to the observer when an intersection is passed
-	 * @param newHeading
 	 */
 	public void notifyIntersectionPassed(Integer intersection){
+		System.out.println("[DEBUG@GPS@setCurrentPosition] notifyIntersectionPassed");
 		for(GPSObserver o : this.observers){
 			o.onIntersectionPassed(map.getIntersectionPosition(intersection));
 		}
