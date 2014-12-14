@@ -11,7 +11,7 @@ import com.ldm.model.geometry.Vect;
 
 public class GPS {
 	
-	private static final Double reachDistanceThreshold = 10.0;
+	private static final Double reachDistanceThreshold = 50.0;
 	
 	private RoadNetwork map = new RoadNetwork();	
 	private Position currentPosition = new Position();
@@ -43,9 +43,12 @@ public class GPS {
 	public void setCurrentPosition(Position currentPosition){
 		this.currentPosition = currentPosition;
 		
-		int closestIntersection = this.FindClosestIntersection();
+		System.out.println(currentPosition);
+		
+		int closestIntersection = this.FindClosestIntersection();				
 		if(this.getDistanceToIntersection(closestIntersection) < reachDistanceThreshold){
 			if(this.lastIntersection == null || this.lastIntersection != closestIntersection){
+				this.lastIntersection = closestIntersection;
 				System.out.println("[DEBUG@GPS@setCurrentPosition] notifyIntersectionPassed");
 				this.notifyIntersectionPassed(closestIntersection);
 			}
@@ -96,10 +99,13 @@ public class GPS {
 		if(lastIntersection == null){
 			lastIntersection = this.FindClosestIntersection();
 		}
+				
+		System.out.println("[DEBUG@GPS@setDestination] Destination set: " + destination);
 		
 		this.itinerary = calculateItinerary(this.lastIntersection, destination);
 		
 		if(this.itinerary != null){
+			System.out.println("[DEBUG@GPS@setDestination] Itinerary set: " + this.itinerary);
 			this.startNavigation();
 		}
 	}
@@ -163,9 +169,10 @@ public class GPS {
 			Double cDistance = Position.evaluateSquareDistance(map.getIntersectionPosition(i), this.currentPosition);
 			if(cDistance < minSquareDistance){
 				closestIntersection = i;
-				minSquareDistance = cDistance;
+				minSquareDistance = cDistance;				
 			}
 		}
+				
 		return closestIntersection;
 	}
 	
@@ -173,12 +180,18 @@ public class GPS {
 	 * @return The position of a random intersection in the map
 	 */
 	public Position getRandomIntersectionPosition(){
-		ArrayList<Integer> intersections = this.map.getIntersections();
-		Random r = new Random();
-		Integer intersectionId = intersections.get(r.nextInt(intersections.size()));
-		return this.map.getIntersectionPosition(intersectionId);
+		return new Position(this.map.getIntersectionPosition(this.getRandomIntersection()));
 	}
 
+	/**
+	 * @return The identifier of a random intersection in the map
+	 */
+	public int getRandomIntersection(){
+		ArrayList<Integer> intersections = this.map.getIntersections();
+		Random r = new Random();
+		return intersections.get(r.nextInt(intersections.size()));
+	}
+	
 	/**
 	 * Subscribe an observer to the GPS notifications
 	 * @param o The observer

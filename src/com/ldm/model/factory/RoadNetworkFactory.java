@@ -37,7 +37,7 @@ public class RoadNetworkFactory {
 				Integer speedLimit = Integer.parseInt(attrs[2]);
 				
 				map.addRoad(id0, id1, speedLimit);
-				if(attrs[1].equals("b")){
+				if(attrs[3].equals("b")){
 					map.addRoad(id1, id0, speedLimit);
 				}
 			}

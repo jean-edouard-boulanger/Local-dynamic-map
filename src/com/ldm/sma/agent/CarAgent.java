@@ -52,7 +52,7 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 		return this.currentPosition;
 	}
 	
-	public void setCurrentPosition(Position p){
+	public void setCurrentPosition(Position p){		
 		this.currentPosition = p;
 		this.gps.setCurrentPosition(p);
 	}
@@ -76,9 +76,11 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 			e.printStackTrace();
 		}
 		
+		gps.subscribe(this);
 		
 		this.setCurrentPosition(this.gps.getRandomIntersectionPosition());
-		System.out.println(this.currentPosition);
+		
+		this.gps.setDestination(this.gps.getRandomIntersection());
 		
 		SwingUtilities.invokeLater(new Runnable() {
 			@Override
@@ -97,7 +99,6 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 		this.addBehaviour(new HandleMessagesBehaviour(this));
 		
 		this.addBehaviour(new DriveBehaviour(this));
-		
 	}
 	
 	@Override

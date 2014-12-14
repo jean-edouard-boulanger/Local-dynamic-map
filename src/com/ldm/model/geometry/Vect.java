@@ -13,8 +13,16 @@ public class Vect {
 	
 	public Vect normalize(){
 		double norm = Math.sqrt(dx * dx + dy * dy);
-		this.dx /= norm;
-		this.dy /= norm;
+		if(norm != 0){
+			this.dx /= norm;
+			this.dy /= norm;	
+		}
+		return this;
+	}
+	
+	public Vect mult(double factor){
+		this.dx *= factor;
+		this.dy *= factor;
 		return this;
 	}
 	

@@ -15,11 +15,7 @@ public class DijkstraAlgorithm {
 
 	public ArrayDeque<Integer> compute(RoadNetwork g, Integer vd, Integer va) {
 		ArrayDeque<Integer> path = new ArrayDeque<>();
-				
-		if(!g.containsAPath(vd, va)){
-			return null;
-		}
-		
+						
 		List<Integer> unvisitedIntersections = g.getIntersections();
 		List<Integer> visitedIntersections = new ArrayList<>();
 		
@@ -58,6 +54,7 @@ public class DijkstraAlgorithm {
 					shortestPaths.get(procVertex).first = currentVertex;
 				}
 			}
+			
 			
 			/*
 			for(Map.Entry<Integer, Pair<Integer, Double>> shortestPath : shortestPaths.entrySet() ){

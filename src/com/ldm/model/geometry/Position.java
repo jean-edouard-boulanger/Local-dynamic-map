@@ -11,6 +11,10 @@ public class Position {
 		this.y = y;
 	}
 
+	public Position(Position other){
+		this(other.x, other.y);
+	}
+	
 	public double getX() {return x;}
 
 	public void setX(double x) {this.x = x;}
@@ -18,6 +22,12 @@ public class Position {
 	public double getY() {return y;}
 
 	public void setY(double y) {this.y = y;}
+	
+	public Position add(Vect v){
+		this.x += v.dx;
+		this.y += v.dy;
+		return this;
+	}
 	
 	public static Double evaluateSquareDistance(Position p1, Position p2){
 		if(p1 == null || p2 == null){return null;}
