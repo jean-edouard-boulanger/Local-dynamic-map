@@ -11,12 +11,12 @@ import com.ldm.model.geometry.Vect;
 
 public class GPS {
 	
-	private static final Double reachDistanceThreshold = 10.0;
+	private static final Double reachDistanceThreshold = 4.0;
 	
 	private RoadNetwork map = new RoadNetwork();	
 	private Position currentPosition = new Position();
 	
-	private Double currentMaximumSpeed = 0.0;
+	private int currentMaximumSpeed = 5;
 	
 	private boolean navigationMode;
 	
@@ -42,7 +42,7 @@ public class GPS {
 		return this.currentPosition;
 	}
 	
-	public Double getCurrentMaximumSpeed(){
+	public Integer getCurrentMaximumSpeed(){
 		return this.currentMaximumSpeed;
 	}
 	
@@ -69,8 +69,8 @@ public class GPS {
 		this.currentPosition = currentPosition;
 		
 		this.notifyPositionChanged(currentPosition);
-				
-		//System.out.println("Speed limit: " + this.map.getRoadSpeedLimit(this.getCurrentRoad(), this.getCurrentRoadProgess()));
+						
+		this.currentMaximumSpeed = this.map.getRoadSpeedLimit(this.getCurrentRoad(), this.getCurrentRoadProgess());
 		
 		int closestIntersection = this.FindClosestIntersection();				
 		if(this.getDistanceToIntersection(closestIntersection) < reachDistanceThreshold){

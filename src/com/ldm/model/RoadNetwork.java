@@ -85,8 +85,8 @@ public class RoadNetwork extends InMemoryGrph {
 	}
 	
 	public Integer getRoadSpeedLimit(Integer r){
-		if(r == null){return null;}
-		if(!this.containsEdge(r)){return null;}
+		if(r == null){return 5;}
+		if(!this.containsEdge(r)){return 5;}
 		return this.speedLimits.get(r);
 	}
 	
@@ -104,6 +104,10 @@ public class RoadNetwork extends InMemoryGrph {
 			return ms.intValue();
 		}
 		return usualSpeedLimit;
+	}
+	
+	public boolean isRoadBothDirection(int i0, int i1){
+		return this.hasRoad(i1, i0);
 	}
 	
 	public void addRoadDisruption(int i0, int i1, Disruption d){

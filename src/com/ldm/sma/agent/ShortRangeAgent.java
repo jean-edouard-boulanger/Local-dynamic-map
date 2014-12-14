@@ -107,7 +107,7 @@ public abstract class ShortRangeAgent extends GuiAgent {
 			return null;
 		}
 		
-		if(received.getSender() == this.getAID()){
+		if(received.getSender().equals(this.getAID())){
 			return null;
 		}
 		
@@ -117,9 +117,7 @@ public abstract class ShortRangeAgent extends GuiAgent {
 		
 		if(sentAtPosition == null){return null;}
 		
-		double distance = Position.evaluateDistance(this.getCurrentPosition(), sentAtPosition);
-		System.out.println("[DEBUG@"+ this.getLocalName() +"@receiveFromAround] " + distance);
-		
+		double distance = Position.evaluateDistance(this.getCurrentPosition(), sentAtPosition);		
 		if(sentAtPosition != null && distance < range){
 			return received;
 		}

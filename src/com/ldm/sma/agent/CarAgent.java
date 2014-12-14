@@ -43,9 +43,7 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
     private ArrayList<IR> IRsCollection = new ArrayList<>();
 	
     private Position currentPosition = new Position();
-    
-    private double currentSpeed = 50;
-    
+        
     private GPS gps;
     
 	private PropertyChangeSupport propertyChangeCarAgent;
@@ -70,14 +68,6 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 		this.gps.setCurrentPosition(p);
 	}
 	
-	public double getCurrentSpeed(){
-		return this.currentSpeed;
-	}
-	
-	public void setCurrentSpeed(double currentSpeed){
-		this.currentSpeed = currentSpeed;
-	}
-	
 	@Override
 	public void setup(){
 		super.setup();
@@ -92,7 +82,7 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 		gps.subscribe(this);
 		
 		this.setCurrentPosition(this.gps.getMap().getIntersectionPosition(1));
-		this.gps.setDestination(2);
+		this.gps.setDestination(5);
 		
 		SwingUtilities.invokeLater(new Runnable() {
 			@Override
@@ -126,7 +116,7 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 	
 	@Override
 	public void onDestinationReached() {
-		//this.gps.setDestination(this.gps.getRandomIntersection());
+		this.gps.setDestination(this.gps.getRandomIntersection());
 	}
 	
 	@Override
@@ -165,7 +155,7 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 		public void action() {
 			boolean received = AgentHelper.receiveMessageFromAround(CarAgent.this, MessageTemplate.MatchPerformative(ACLMessage.INFORM), new MessageVisitor(){
 				public boolean onPokeMessage(PokeMessage message, ACLMessage aclMsg){
-					System.out.println("[DEBUG@"+ CarAgent.this.getLocalName() +"] Poke received from " + aclMsg.getSender() + " : " + message);
+					System.out.println("[DEBUG@"+ CarAgent.this.getLocalName() +"] Poke received from " + aclMsg.getSender().getLocalName() + " : " + message);
 					return true;
 				}
 			});

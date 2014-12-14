@@ -111,7 +111,7 @@ public class NavigationMap extends Group {
 			Position i1pos = this.getScaledPosition(map.getIntersectionPosition(nextIntersection));
 			
 			Line itinerarySubLine = new Line(i0pos.getX(), i0pos.getY(), i1pos.getX(), i1pos.getY());
-			itinerarySubLine.setStroke(Color.CADETBLUE);
+			itinerarySubLine.setStroke(Color.BLUEVIOLET);
 			itinerarySubLine.setStrokeWidth(3);
 			
 			this.itinerary.addLast(itinerarySubLine);
@@ -149,9 +149,12 @@ public class NavigationMap extends Group {
 				
 				Position neighborPos = getScaledPosition(this.map.getIntersectionPosition(neighbor));
 				
+				Color strokeColor = (this.map.isRoadBothDirection(inter, neighbor)) ? Color.GREY : Color.LIGHTGREY;
+				int strokeWidth = (this.map.isRoadBothDirection(inter, neighbor)) ? 5 : 3;
+				
 				Line roadLine = new Line(interPos.getX(), interPos.getY(), neighborPos.getX(), neighborPos.getY());
-				roadLine.setStrokeWidth(5);
-				roadLine.setStroke(Color.LIGHTGREY);
+				roadLine.setStrokeWidth(strokeWidth);
+				roadLine.setStroke(strokeColor);
 				
 				Integer road  = map.getRoad(inter, neighbor);
 				this.roads.put(road, roadLine);
@@ -171,8 +174,8 @@ public class NavigationMap extends Group {
 					Position endLinePos = interPos.getAddedTo(u.getMultipliedBy(endFactor));
 					
 					Line disruptionLine = new Line(startLinePos.getX(), startLinePos.getY(), endLinePos.getX(), endLinePos.getY());
-					disruptionLine.setStroke(Color.RED);
-					disruptionLine.setStrokeWidth(9);
+					disruptionLine.setStroke(Color.rgb(255, (int)Math.round(165 * (1 - d.getDisruptionLevel())), 0, 0.4));
+					disruptionLine.setStrokeWidth(10);
 					disruptionLine.setStrokeLineCap(StrokeLineCap.ROUND);
 					
 					this.getChildren().add(disruptionLine);
