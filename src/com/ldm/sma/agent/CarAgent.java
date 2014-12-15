@@ -82,6 +82,7 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 		gps.subscribe(this);
 		
 		this.setCurrentPosition(this.gps.getRandomIntersectionPosition());
+		//this.gps.setCurrentPosition(this.gps.getMap().getIntersectionPosition(1));
 		this.gps.setDestination(this.gps.getRandomIntersection());
 		
 		SwingUtilities.invokeLater(new Runnable() {
@@ -106,7 +107,7 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 	
 	@Override
 	public void onMessageReceivedFromAround(ACLMessage aclMsg, Position sentAtPosition){
-		
+		propertyChangeCarAgent.firePropertyChange(carUIEventType.messageReceived.toString(), null, sentAtPosition);
 	}
 	
 	@Override

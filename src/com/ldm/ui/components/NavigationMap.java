@@ -13,12 +13,16 @@ import com.ldm.model.RoadNetwork;
 import com.ldm.model.geometry.Position;
 import com.ldm.model.geometry.Vect;
 
+import javafx.animation.FadeTransition;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.scene.Group;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.StrokeLineCap;
+import javafx.util.Duration;
 
 public class NavigationMap extends Group {
 
@@ -211,14 +215,6 @@ public class NavigationMap extends Group {
 		this.background.toBack();
 	}
 	
-	/**
-	 * @param p The old position
-	 * @return The scaled position
-	 */
-	public Position getScaledPosition(Position p){
-		return new Position(p.getX() * this.scaleX, p.getY() * this.scaleY);
-	}
-	
 	public Integer getClickedIntersection(Position clicked){
 		double smallestSqDistance = Double.MAX_VALUE;
 		Integer closestIntersection = null;
@@ -235,8 +231,40 @@ public class NavigationMap extends Group {
 		return closestIntersection;
 	}
 	
+	public void notifyMessageReceived(Position p){
+		Position sp = this.getScaledPosition(p);
+		
+		Circle c = new Circle(sp.getX(), sp.getY(), 4, Color.YELLOW);
+		
+		FadeTransition ft = new FadeTransition(Duration.millis(1000), c);
+		ft.setFromValue(1.0);
+		ft.setToValue(0.0);
+		ft.setDelay(Duration.millis(800));
+		ft.onFinishedProperty().set(new EventHandler<ActionEvent>(){
+			@Override
+			public void handle(ActionEvent event) {
+				NavigationMap.this.getChildren().remove(c);
+			}
+		});
+		
+		c.toFront();
+		car.toFront();
+		
+		this.getChildren().add(c);
+		
+		this.car.notifyMessageReceived();
+		ft.play();
+	}
+	
 	public void notifyMessageSent(){
 		this.car.notifyMessageSent();
 	}
 	
+	/**
+	 * @param p The old position
+	 * @return The scaled position
+	 */
+	public Position getScaledPosition(Position p){
+		return new Position(p.getX() * this.scaleX, p.getY() * this.scaleY);
+	}
 }

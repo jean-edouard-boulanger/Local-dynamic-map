@@ -31,7 +31,8 @@ public class WindowUI extends Application implements PropertyChangeListener {
 		itinerarySet,
 		wayPointPassed,
 		messageSent,
-		intersectionClicked
+		intersectionClicked,
+		messageReceived
 	}
 	
 	private CarAgent carAgent;
@@ -116,6 +117,14 @@ public class WindowUI extends Application implements PropertyChangeListener {
 				@Override
 				public void run() {
 					navigationMap.notifyMessageSent();
+				}
+			});
+		}
+		else if(evt.getPropertyName().equals(carUIEventType.messageReceived.toString())){
+			Platform.runLater(new Runnable(){
+				@Override
+				public void run() {
+					navigationMap.notifyMessageReceived((Position)evt.getNewValue());
 				}
 			});
 		}
