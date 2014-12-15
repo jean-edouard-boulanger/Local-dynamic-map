@@ -2,9 +2,14 @@ package com.ldm.ui.components;
 
 import com.ldm.model.geometry.Position;
 
+import javafx.animation.FadeTransition;
+import javafx.animation.FillTransition;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.scene.Group;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
+import javafx.util.Duration;
 
 public class Car extends Group {
 	
@@ -13,7 +18,7 @@ public class Car extends Group {
 	Position currentPosition;
 	
 	public Car(){
-		carBody = new Circle(0, 0, 4, Color.RED);
+		carBody = new Circle(0, 0, 4, Color.CRIMSON);
 		this.getChildren().add(carBody);
 	}
 	
@@ -22,6 +27,30 @@ public class Car extends Group {
 		
 		carBody.setCenterX(p.getX());
 		carBody.setCenterY(p.getY());
+	}
+	
+	public void notifyMessageSent(){
+		FillTransition ft = new FillTransition(Duration.millis(300), this.carBody, Color.RED, Color.CYAN);
+		ft.setCycleCount(2);
+		ft.onFinishedProperty().set(new EventHandler<ActionEvent>(){
+			@Override
+			public void handle(ActionEvent event) {
+				Car.this.carBody.setFill(Color.RED);
+			}
+		});
+		ft.play();
+	}
+	
+	public void notifyMessageReceived(){
+		FillTransition ft = new FillTransition(Duration.millis(300), this.carBody, Color.RED, Color.YELLOW);
+		ft.setCycleCount(2);
+		ft.onFinishedProperty().set(new EventHandler<ActionEvent>(){
+			@Override
+			public void handle(ActionEvent event) {
+				Car.this.carBody.setFill(Color.RED);
+			}
+		});
+		ft.play();
 	}
 	
 	public Position getCurrentPosition(){

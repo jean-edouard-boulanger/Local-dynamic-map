@@ -11,20 +11,20 @@ import com.ldm.model.geometry.Vect;
 
 public class GPS {
 	
-	private static final Double reachDistanceThreshold = 10.0;
+	private static final Double reachDistanceThreshold = 4.0;
 	
 	private RoadNetwork map = new RoadNetwork();	
 	private Position currentPosition = new Position();
 	
-	private double currentMaximumSpeed = 0.0;
+	private int currentMaximumSpeed = 5;
 	
-	private boolean navigationMode;
+	private boolean navigationMode = false;
 	
 	private ArrayList<GPSObserver> observers = new ArrayList<>();
 	
 	private Integer lastIntersection = null;
 	
-	private ArrayDeque<Integer> itinerary = null;
+	private ArrayDeque<Integer> itinerary = new ArrayDeque<>();
 		
 	public GPS(){}
 	
@@ -42,7 +42,26 @@ public class GPS {
 		return this.currentPosition;
 	}
 	
+	public Integer getCurrentMaximumSpeed(){
+		return this.currentMaximumSpeed;
+	}
+	
+	public Double getCurrentRoadProgess(){
+		if(this.itinerary == null){return null;}
+		if(this.lastIntersection == null){return null;}
+		if(this.itinerary.peek() == null){return null;}
+		if(this.lastIntersection == this.itinerary.peek()){return 1.0;}
+		
+		Double totalDistance = this.map.getRoadDistance(this.lastIntersection, this.itinerary.peek());
+		Double travelledDistance = Position.evaluateDistance(this.map.getIntersectionPosition(this.lastIntersection), this.currentPosition);
+		
+		return travelledDistance / totalDistance;
+	}
+	
 	public Integer getCurrentRoad(){
+		if(this.lastIntersection == null){return null;}
+		if(this.itinerary == null){return null;}
+		if(this.itinerary.peek() == null){return null;}
 		return map.getRoad(this.lastIntersection, this.itinerary.peek());
 	}
 	
@@ -50,6 +69,8 @@ public class GPS {
 		this.currentPosition = currentPosition;
 		
 		this.notifyPositionChanged(currentPosition);
+						
+		this.currentMaximumSpeed = this.map.getRoadSpeedLimit(this.getCurrentRoad(), this.getCurrentRoadProgess());
 		
 		int closestIntersection = this.FindClosestIntersection();				
 		if(this.getDistanceToIntersection(closestIntersection) < reachDistanceThreshold){
@@ -63,14 +84,15 @@ public class GPS {
 			if(closestIntersection != itinerary.peek()){return;}
 			
 			this.notifyWayPointPassed(this.itinerary.pop());
-						
-			if(this.itinerary.size() == 0){
-				this.notifyDestinationReached();
-			}else{
-				this.notifyRoadChanged(this.getCurrentRoad());
+			
+			Integer newRoad = this.getCurrentRoad();
+			if(newRoad != null){
+				this.notifyRoadChanged(newRoad);
 			}
 			
-			
+			if(this.itinerary.size() == 0){
+				this.notifyDestinationReached();
+			}
 			
 			if(this.itinerary.size() == 0){
 				this.navigationMode = false;
@@ -111,14 +133,16 @@ public class GPS {
 		if(lastIntersection == null){
 			lastIntersection = this.FindClosestIntersection();
 		}
-				
-		System.out.println("[DEBUG@GPS@setDestination] Destination set: " + destination);
 		
-		this.itinerary = calculateItinerary(this.lastIntersection, destination);
+		Integer firstIntersection = this.lastIntersection;
+		if(this.isNavigationModeOn() && this.itinerary != null && this.itinerary.peek() != null){
+			firstIntersection = this.itinerary.peek();
+			this.itinerary.clear();
+		}				
 		
+		this.itinerary = calculateItinerary(firstIntersection, destination);
 		if(this.itinerary != null){			
 			this.notifyItinerarySet(itinerary);
-			
 			this.startNavigation();
 		}
 	}

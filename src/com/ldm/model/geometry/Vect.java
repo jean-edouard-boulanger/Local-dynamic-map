@@ -26,6 +26,10 @@ public class Vect {
 		return this;
 	}
 	
+	public Vect getMultipliedBy(double factor){
+		return new Vect(this.dx * factor, this.dy * factor);
+	}
+	
 	public String toString(){
 		return "("+ dx +","+ dy +")";
 	}

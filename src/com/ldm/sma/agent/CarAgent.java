@@ -17,6 +17,7 @@ import com.ldm.model.structure.IR;
 import com.ldm.sma.agent.helper.AgentHelper;
 import com.ldm.sma.message.IRMessage;
 import com.ldm.sma.message.MessageVisitor;
+import com.ldm.sma.message.PokeMessage;
 import com.ldm.sma.behaviour.DriveBehaviour;
 import com.ldm.ui.WindowUI;
 import com.ldm.ui.WindowUI.carUIEventType;
@@ -26,6 +27,7 @@ import jade.core.behaviours.Behaviour;
 import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.OneShotBehaviour;
 import jade.core.behaviours.SimpleBehaviour;
+import jade.core.behaviours.TickerBehaviour;
 import jade.gui.GuiEvent;
 
 import java.util.ArrayDeque;
@@ -43,9 +45,7 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
     private ArrayList<IR> IRsCollection = new ArrayList<>();
 	
     private Position currentPosition = new Position();
-    
-    private double currentSpeed = 500;
-    
+        
     private GPS gps;
     private DL currentDL;
     
@@ -71,14 +71,6 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 		this.gps.setCurrentPosition(p);
 	}
 	
-	public double getCurrentSpeed(){
-		return this.currentSpeed;
-	}
-	
-	public void setCurrentSpeed(double currentSpeed){
-		this.currentSpeed = currentSpeed;
-	}
-	
 	@Override
 	public void setup(){
 		super.setup();
@@ -93,7 +85,7 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 		gps.subscribe(this);
 		
 		this.setCurrentPosition(this.gps.getRandomIntersectionPosition());
-		
+		//this.gps.setCurrentPosition(this.gps.getMap().getIntersectionPosition(1));
 		this.gps.setDestination(this.gps.getRandomIntersection());
 		
 		SwingUtilities.invokeLater(new Runnable() {
@@ -111,7 +103,19 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 				
 		this.addBehaviour(new HandleMessagesBehaviour(this));
 		
+		this.addBehaviour(new SendPokeBehaviour(this, 10000));
+				
 		this.addBehaviour(new DriveBehaviour(this));
+	}
+	
+	@Override
+	public void onMessageReceivedFromAround(ACLMessage aclMsg, Position sentAtPosition){
+		propertyChangeCarAgent.firePropertyChange(carUIEventType.messageReceived.toString(), null, sentAtPosition);
+	}
+	
+	@Override
+	public void onMessageSentAround(ACLMessage aclMsg, Position sentAtPosition){
+		propertyChangeCarAgent.firePropertyChange(carUIEventType.messageSent.toString(), null, sentAtPosition);
 	}
 	
 	@Override
@@ -134,7 +138,7 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 	
 	@Override
 	public void onDestinationReached() {
-		this.gps.setDestination(this.gps.getRandomIntersection());
+		//this.gps.setDestination(this.gps.getRandomIntersection());
 	}
 	
 	@Override
@@ -152,35 +156,59 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 		
 	}
 	
-	public class HandleMessagesBehaviour extends Behaviour{
+	@Override
+	public void onNavigationStop() {
 		
+	}
+	
+	
+	public class SendPokeBehaviour extends TickerBehaviour{
+		public SendPokeBehaviour(Agent a, long period) {
+			super(a, period);
+		}
+
+		@Override
+		protected void onTick() {
+			System.out.println("[DEBUG@"+ this.myAgent.getLocalName() +"] Poke sent");
+			AgentHelper.sendMessageAround(CarAgent.this, ACLMessage.INFORM, new PokeMessage());
+		}
+	}
+	
+	public class HandleMessagesBehaviour extends Behaviour{
 		public HandleMessagesBehaviour(Agent agent){
 			super(agent);
 		}
 		
 		@Override
 		public void action() {
-			ACLMessage m = receive();
-			if(m != null)
-				System.out.println(m.getContent());
-               boolean received = AgentHelper.receiveMessageFromAround(CarAgent.this, MessageTemplate.MatchPerformative(ACLMessage.INFORM), new MessageVisitor(){
+
+               boolean receivedIR = AgentHelper.receiveMessageFromAround(CarAgent.this, MessageTemplate.MatchPerformative(ACLMessage.INFORM), new MessageVisitor(){
                     public boolean onIRMessage(IRMessage message, ACLMessage aclMsg){
                         aggregateIR(message.getIR());
                         System.out.println("[Receive message :] "+CarAgent.this.IRsCollection.toString());
                         return true;
                     }
                 });		
-               if(!received){
+               if(!receivedIR){
             	   block();
                }
+
+			boolean receivedPoke = AgentHelper.receiveMessageFromAround(CarAgent.this, MessageTemplate.MatchPerformative(ACLMessage.INFORM), new MessageVisitor(){
+				public boolean onPokeMessage(PokeMessage message, ACLMessage aclMsg){
+					System.out.println("[DEBUG@"+ CarAgent.this.getLocalName() +"] Poke received from " + aclMsg.getSender().getLocalName() + " : " + message);
+					return true;
+				}
+			});
+			
+			if(!receivedPoke){
+				block();
+			}
 		}
 
 		@Override
 		public boolean done() {
 			return false;
 		}
-
-		
 	}
       
     public ArrayList<IR> getIRsCollection(){
@@ -274,7 +302,12 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
     }
 	
 	@Override
-	protected void onGuiEvent(GuiEvent arg0) {
-
+	protected void onGuiEvent(GuiEvent event) {
+		if(event.getType() == carUIEventType.intersectionClicked.ordinal()){
+			Integer intersection = (Integer)event.getParameter(0);
+			this.gps.setDestination(intersection);
+		}
 	}
+
+
 }
