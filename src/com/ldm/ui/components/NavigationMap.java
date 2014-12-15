@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import bsh.This;
+
 import com.ldm.data.structure.Pair;
 import com.ldm.model.Disruption;
 import com.ldm.model.RoadNetwork;
@@ -15,6 +17,7 @@ import javafx.scene.Group;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
+import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.StrokeLineCap;
 
 public class NavigationMap extends Group {
@@ -24,6 +27,8 @@ public class NavigationMap extends Group {
 	Map<Integer, Line> roads;
 	Map<Integer, Circle> intersections;
 	Map<Integer, Line> disruptions;
+	
+	Rectangle background;
 	
 	ArrayDeque<Line> itinerary;
 	
@@ -99,7 +104,7 @@ public class NavigationMap extends Group {
 		Position intPos = this.getScaledPosition(map.getIntersectionPosition(currentIntersection));
 		
 		Line firstLine = new Line(car.getCurrentPosition().getX(), car.getCurrentPosition().getY(), intPos.getX(), intPos.getY());
-		firstLine.setStroke(Color.CADETBLUE);
+		firstLine.setStroke(Color.BLUEVIOLET);
 		firstLine.setStrokeWidth(3);
 		this.itinerary.addLast(firstLine);
 		this.getChildren().add(firstLine);
@@ -132,6 +137,13 @@ public class NavigationMap extends Group {
 	 * Initially draws the complete map
 	 */
 	private void draw(){
+		
+		this.background = new Rectangle();
+		this.background.setHeight(this.height);
+		this.background.setWidth(this.width);
+		this.background.setFill(Color.WHITE);
+		
+		this.getChildren().add(background);
 		
 		ArrayList<Integer> inters = map.getIntersections();
 		for(int inter : inters){
@@ -174,7 +186,13 @@ public class NavigationMap extends Group {
 					Position endLinePos = interPos.getAddedTo(u.getMultipliedBy(endFactor));
 					
 					Line disruptionLine = new Line(startLinePos.getX(), startLinePos.getY(), endLinePos.getX(), endLinePos.getY());
-					disruptionLine.setStroke(Color.rgb(255, (int)Math.round(165 * (1 - d.getDisruptionLevel())), 0, 0.4));
+					
+					if(d.getDisruptionLevel() < 0.95){
+						disruptionLine.setStroke(Color.rgb(255, (int)Math.round(165 * (1 - d.getDisruptionLevel())), 0, 0.4));
+					}else{
+						disruptionLine.setStroke(Color.rgb(0, 0, 0, 0.5));
+					}
+					
 					disruptionLine.setStrokeWidth(10);
 					disruptionLine.setStrokeLineCap(StrokeLineCap.ROUND);
 					
@@ -190,6 +208,7 @@ public class NavigationMap extends Group {
 		
 		this.getChildren().add(this.car);
 		this.car.toFront();
+		this.background.toBack();
 	}
 	
 	/**
@@ -199,4 +218,21 @@ public class NavigationMap extends Group {
 	public Position getScaledPosition(Position p){
 		return new Position(p.getX() * this.scaleX, p.getY() * this.scaleY);
 	}
+	
+	public Integer getClickedIntersection(Position clicked){
+		double smallestSqDistance = Double.MAX_VALUE;
+		Integer closestIntersection = null;
+		
+		for(Map.Entry<Integer, Circle> inter : this.intersections.entrySet()){
+			double sqDistance = Position.evaluateDistance(clicked, new Position(inter.getValue().getCenterX(), inter.getValue().getCenterY()));
+			if(sqDistance < smallestSqDistance){
+				closestIntersection = inter.getKey();
+				smallestSqDistance = sqDistance;
+			}
+		}
+		
+		if(smallestSqDistance > 13){closestIntersection = null;}
+		return closestIntersection;
+	}
+	
 }

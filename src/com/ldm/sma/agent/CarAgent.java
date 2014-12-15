@@ -134,6 +134,15 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 		
 	}
 	
+	@Override
+	public void onNavigationStop(){
+		
+	}
+	
+	public void notifyMessageSent(){
+		propertyChangeCarAgent.firePropertyChange(carUIEventType.messageSent.toString() , null, null);
+	}
+	
 	public class SendPokeBehaviour extends TickerBehaviour{
 		public SendPokeBehaviour(Agent a, long period) {
 			super(a, period);
@@ -251,7 +260,10 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
     }
 	
 	@Override
-	protected void onGuiEvent(GuiEvent arg0) {
-
+	protected void onGuiEvent(GuiEvent event) {
+		if(event.getType() == carUIEventType.intersectionClicked.ordinal()){
+			Integer intersection = (Integer)event.getParameter(0);
+			this.gps.setDestination(intersection);
+		}
 	}
 }

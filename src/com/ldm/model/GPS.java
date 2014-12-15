@@ -18,13 +18,13 @@ public class GPS {
 	
 	private int currentMaximumSpeed = 5;
 	
-	private boolean navigationMode;
+	private boolean navigationMode = false;
 	
 	private ArrayList<GPSObserver> observers = new ArrayList<>();
 	
 	private Integer lastIntersection = null;
 	
-	private ArrayDeque<Integer> itinerary = null;
+	private ArrayDeque<Integer> itinerary = new ArrayDeque<>();
 		
 	public GPS(){}
 	
@@ -134,13 +134,15 @@ public class GPS {
 			lastIntersection = this.FindClosestIntersection();
 		}
 		
-		System.out.println("[DEBUG@GPS@setDestination] Destination set: " + destination);
+		Integer firstIntersection = this.lastIntersection;
+		if(this.isNavigationModeOn() && this.itinerary != null && this.itinerary.peek() != null){
+			firstIntersection = this.itinerary.peek();
+			this.itinerary.clear();
+		}				
 		
-		this.itinerary = calculateItinerary(this.lastIntersection, destination);
-		
+		this.itinerary = calculateItinerary(firstIntersection, destination);
 		if(this.itinerary != null){			
 			this.notifyItinerarySet(itinerary);
-			
 			this.startNavigation();
 		}
 	}

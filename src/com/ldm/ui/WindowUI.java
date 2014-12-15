@@ -1,5 +1,7 @@
 package com.ldm.ui;
 
+import jade.gui.GuiEvent;
+
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.beans.PropertyChangeEvent;
@@ -13,8 +15,13 @@ import com.ldm.ui.components.NavigationMap;
 
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.event.Event;
+import javafx.event.EventHandler;
 import javafx.scene.Group;
 import javafx.scene.Scene;
+import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 
 public class WindowUI extends Application implements PropertyChangeListener {
@@ -22,7 +29,9 @@ public class WindowUI extends Application implements PropertyChangeListener {
 	public enum carUIEventType{
 		carMoved,
 		itinerarySet,
-		wayPointPassed
+		wayPointPassed,
+		messageSent,
+		intersectionClicked
 	}
 	
 	private CarAgent carAgent;
@@ -31,25 +40,41 @@ public class WindowUI extends Application implements PropertyChangeListener {
 	NavigationMap navigationMap;
 	
 	@Override
-	public void start(Stage primaryStage) throws Exception {		
+	public void start(Stage primaryStage) throws Exception {	
 		this.primaryStage = primaryStage;
 		primaryStage.setTitle(this.carAgent.getLocalName());
 		primaryStage.setResizable(false);
 		
 		GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
 		
-		Group root = new Group();
-		Scene scene = new Scene(root, gd.getDisplayMode().getWidth() * 0.8, gd.getDisplayMode().getHeight() * 0.8);
+		Pane root = new Pane();
+		Scene scene = new Scene(root, gd.getDisplayMode().getWidth() * 0.65, gd.getDisplayMode().getHeight() * 0.65);
 		
-		double offset = 50.0;
-		double mapHeight = scene.getHeight() - 2.0 * offset; 
-		double mapWidth = scene.getWidth() - 2.0 * offset;
+		final double offset = 90.0;
+		final double mapHeight = scene.getHeight() - 2.0 * offset; 
+		final double mapWidth = scene.getWidth() - 2.0 * offset;
 		
 		navigationMap = new NavigationMap(this.carAgent.getGPS().getMap(), mapHeight, mapWidth);
-		navigationMap.relocate(50, 50);
+		navigationMap.relocate(offset, offset);
+		
+		navigationMap.setOnMouseClicked(new EventHandler<MouseEvent>(){
+			@Override
+			public void handle(MouseEvent event) {
+				if(event.getButton().equals(MouseButton.PRIMARY)){
+					if(event.getClickCount() == 2){
+						Integer intersection = navigationMap.getClickedIntersection(new Position(event.getSceneX() - offset, event.getSceneY() - offset));
+						if(intersection != null){
+							GuiEvent  ev = new GuiEvent(WindowUI.this, carUIEventType.intersectionClicked.ordinal());
+							ev.addParameter(intersection);
+							carAgent.postGuiEvent(ev);
+						}
+					}
+				}
+			}
+		});
 		
 		root.getChildren().add(navigationMap);
-		
+				
 		primaryStage.setScene(scene);
 		primaryStage.show();
 	}
