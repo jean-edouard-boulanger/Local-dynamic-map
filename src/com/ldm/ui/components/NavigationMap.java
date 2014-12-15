@@ -235,4 +235,8 @@ public class NavigationMap extends Group {
 		return closestIntersection;
 	}
 	
+	public void notifyMessageSent(){
+		this.car.notifyMessageSent();
+	}
+	
 }

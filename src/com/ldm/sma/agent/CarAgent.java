@@ -81,8 +81,8 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 		
 		gps.subscribe(this);
 		
-		this.setCurrentPosition(this.gps.getMap().getIntersectionPosition(1));
-		this.gps.setDestination(5);
+		this.setCurrentPosition(this.gps.getRandomIntersectionPosition());
+		this.gps.setDestination(this.gps.getRandomIntersection());
 		
 		SwingUtilities.invokeLater(new Runnable() {
 			@Override
@@ -105,6 +105,16 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 	}
 	
 	@Override
+	public void onMessageReceivedFromAround(ACLMessage aclMsg, Position sentAtPosition){
+		
+	}
+	
+	@Override
+	public void onMessageSentAround(ACLMessage aclMsg, Position sentAtPosition){
+		propertyChangeCarAgent.firePropertyChange(carUIEventType.messageSent.toString(), null, sentAtPosition);
+	}
+	
+	@Override
 	public void onIntersectionPassed(Position intersectionPosition) {
 		
 	}
@@ -116,7 +126,7 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 	
 	@Override
 	public void onDestinationReached() {
-		this.gps.setDestination(this.gps.getRandomIntersection());
+		//this.gps.setDestination(this.gps.getRandomIntersection());
 	}
 	
 	@Override
@@ -137,10 +147,6 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 	@Override
 	public void onNavigationStop(){
 		
-	}
-	
-	public void notifyMessageSent(){
-		propertyChangeCarAgent.firePropertyChange(carUIEventType.messageSent.toString() , null, null);
 	}
 	
 	public class SendPokeBehaviour extends TickerBehaviour{

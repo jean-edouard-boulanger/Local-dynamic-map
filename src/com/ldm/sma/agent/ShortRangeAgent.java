@@ -31,6 +31,9 @@ public abstract class ShortRangeAgent extends GuiAgent {
 	
 	public abstract Position getCurrentPosition();
 	
+	public abstract void onMessageReceivedFromAround(ACLMessage aclMsg, Position sentAtPosition);
+	public abstract void onMessageSentAround(ACLMessage aclMsg, Position sentAtPosition);
+	
 	public ShortRangeAgent(){
 		super();
 	}
@@ -86,7 +89,9 @@ public abstract class ShortRangeAgent extends GuiAgent {
 	
 	public void sendAround(ACLMessage arg0){
 		arg0.setProtocol(filterDistanceProtocolName);
-		setSentAtPosition(arg0, this.getCurrentPosition());
+		
+		Position position = this.getCurrentPosition();
+		setSentAtPosition(arg0, position);
 		
 		arg0.clearAllReceiver();
 		List<AID> allSRA = this.findAllSRA();
@@ -94,6 +99,7 @@ public abstract class ShortRangeAgent extends GuiAgent {
 			arg0.addReceiver(aid);
 		}
 		
+		this.onMessageSentAround(arg0, position);
 		this.send(arg0);
 	}
 	
@@ -119,6 +125,7 @@ public abstract class ShortRangeAgent extends GuiAgent {
 		
 		double distance = Position.evaluateDistance(this.getCurrentPosition(), sentAtPosition);		
 		if(sentAtPosition != null && distance < range){
+			this.onMessageReceivedFromAround(received, sentAtPosition);
 			return received;
 		}
 		

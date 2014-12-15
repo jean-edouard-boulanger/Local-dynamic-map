@@ -78,7 +78,7 @@ public class WindowUI extends Application implements PropertyChangeListener {
 		primaryStage.setScene(scene);
 		primaryStage.show();
 	}
-
+	
 	@Override
 	public void propertyChange(final PropertyChangeEvent evt) {
 		
@@ -108,6 +108,14 @@ public class WindowUI extends Application implements PropertyChangeListener {
 				@Override
 				public void run() {
 					navigationMap.popNextWayPoint();
+				}
+			});
+		}
+		else if(evt.getPropertyName().equals(carUIEventType.messageSent.toString())){
+			Platform.runLater(new Runnable(){
+				@Override
+				public void run() {
+					navigationMap.notifyMessageSent();
 				}
 			});
 		}
