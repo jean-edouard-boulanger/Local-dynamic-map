@@ -3,6 +3,7 @@ package com.ldm.model;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.Random;
 
 import com.ldm.data.algorithm.DijkstraAlgorithm;
@@ -24,8 +25,10 @@ public class GPS {
 	
 	private Integer lastIntersection = null;
 	
-	private ArrayDeque<Integer> itinerary = new ArrayDeque<>();
+	private LinkedList<Integer> itinerary = new LinkedList<>();
 		
+	DijkstraAlgorithm algorithm = new DijkstraAlgorithm();
+	
 	public GPS(){}
 	
 	public GPS(RoadNetwork map){this.map = map;}
@@ -52,7 +55,7 @@ public class GPS {
 		if(this.itinerary.peek() == null){return null;}
 		if(this.lastIntersection == this.itinerary.peek()){return 1.0;}
 		
-		Double totalDistance = this.map.getRoadDistance(this.lastIntersection, this.itinerary.peek());
+		Double totalDistance = this.map.getRoadDistance(this.lastIntersection, this.itinerary.getFirst());
 		Double travelledDistance = Position.evaluateDistance(this.map.getIntersectionPosition(this.lastIntersection), this.currentPosition);
 		
 		return travelledDistance / totalDistance;
@@ -63,6 +66,12 @@ public class GPS {
 		if(this.itinerary == null){return null;}
 		if(this.itinerary.peek() == null){return null;}
 		return map.getRoad(this.lastIntersection, this.itinerary.peek());
+	}
+	
+	public Integer getNextItineraryRoad(){
+		if(!this.isNavigationModeOn()){return null;}
+		if(this.itinerary.size() < 2){return null;}
+		return map.getRoad(itinerary.get(0), itinerary.get(1));
 	}
 	
 	public void setCurrentPosition(Position currentPosition){
@@ -84,13 +93,14 @@ public class GPS {
 			if(closestIntersection != itinerary.peek()){return;}
 			
 			this.notifyWayPointPassed(this.itinerary.pop());
-			
+						
 			Integer newRoad = this.getCurrentRoad();
 			if(newRoad != null){
 				this.notifyRoadChanged(newRoad);
 			}
 			
 			if(this.itinerary.size() == 0){
+				this.lastIntersection = null;
 				this.notifyDestinationReached();
 			}
 			
@@ -130,11 +140,12 @@ public class GPS {
 	 * @param destination Destination intersection identifier
 	 */
 	public void setDestination(int destination){
-		if(lastIntersection == null){
-			lastIntersection = this.FindClosestIntersection();
+		Integer lastInter = this.lastIntersection;
+		if(lastInter == null){
+			lastInter = this.FindClosestIntersection();
 		}
 		
-		Integer firstIntersection = this.lastIntersection;
+		Integer firstIntersection = lastInter;
 		if(this.isNavigationModeOn() && this.itinerary != null && this.itinerary.peek() != null){
 			firstIntersection = this.itinerary.peek();
 			this.itinerary.clear();
@@ -153,8 +164,7 @@ public class GPS {
 	 * @param i1 Second intersection identifier
 	 * @return A queue of intersections (Including the departure and arrival intersections)
 	 */
-	private ArrayDeque<Integer> calculateItinerary(int i0, int i1){
-		DijkstraAlgorithm algorithm = new DijkstraAlgorithm();
+	private LinkedList<Integer> calculateItinerary(int i0, int i1){
 		return algorithm.compute(this.map, i0, i1);
 	}
 	
@@ -276,10 +286,10 @@ public class GPS {
 		}
 	}
 	
-	public void notifyItinerarySet(ArrayDeque<Integer> itinerary){
+	public void notifyItinerarySet(LinkedList<Integer> itinerary){
 		System.out.println("[DEBUG@GPS@setCurrentPosition] notifyItinerarySet: " + itinerary);
 		for(GPSObserver o : this.observers){
-			o.onItinerarySet(new ArrayDeque<Integer>(itinerary));
+			o.onItinerarySet(new LinkedList<Integer>(itinerary));
 		}
 	}
 	

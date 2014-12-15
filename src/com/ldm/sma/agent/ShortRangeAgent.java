@@ -96,7 +96,9 @@ public abstract class ShortRangeAgent extends GuiAgent {
 		arg0.clearAllReceiver();
 		List<AID> allSRA = this.findAllSRA();
 		for(AID aid : allSRA){
-			arg0.addReceiver(aid);
+			if(!aid.equals(this.getAID())){
+				arg0.addReceiver(aid);
+			}
 		}
 		
 		this.onMessageSentAround(arg0, position);
@@ -110,10 +112,6 @@ public abstract class ShortRangeAgent extends GuiAgent {
 		
 		ACLMessage received = this.receive(MessageTemplate.and(pattern, filterDistanceProtocol));
 		if(received == null){
-			return null;
-		}
-		
-		if(received.getSender().equals(this.getAID())){
 			return null;
 		}
 		

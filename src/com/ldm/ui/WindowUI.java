@@ -7,7 +7,7 @@ import java.awt.GraphicsEnvironment;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.util.ArrayDeque;
+import java.util.LinkedList;
 
 import com.ldm.model.geometry.Position;
 import com.ldm.sma.agent.CarAgent;
@@ -15,9 +15,7 @@ import com.ldm.ui.components.NavigationMap;
 
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.event.Event;
 import javafx.event.EventHandler;
-import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
@@ -100,7 +98,7 @@ public class WindowUI extends Application implements PropertyChangeListener {
 			Platform.runLater(new Runnable(){
 				@Override
 				public void run() {
-					navigationMap.setItinerary((ArrayDeque<Integer>)evt.getNewValue());
+					navigationMap.setItinerary((LinkedList<Integer>)evt.getNewValue());
 				}
 			});
 		}

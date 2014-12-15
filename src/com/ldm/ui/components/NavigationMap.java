@@ -3,9 +3,8 @@ package com.ldm.ui.components;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Map;
-
-import bsh.This;
 
 import com.ldm.data.structure.Pair;
 import com.ldm.model.Disruption;
@@ -34,7 +33,7 @@ public class NavigationMap extends Group {
 	
 	Rectangle background;
 	
-	ArrayDeque<Line> itinerary;
+	LinkedList<Line> itinerary;
 	
 	Car car;
 	
@@ -57,7 +56,7 @@ public class NavigationMap extends Group {
 		this.car = new Car();
 		this.roads = new HashMap<>();
 		this.intersections = new HashMap<>();
-		this.itinerary = new ArrayDeque<Line>();
+		this.itinerary = new LinkedList<Line>();
 		this.disruptions = new HashMap<>();
 		
 		this.draw();
@@ -100,7 +99,7 @@ public class NavigationMap extends Group {
 		this.itinerary.clear();
 	}
 	
-	public void setItinerary(ArrayDeque<Integer> itinerary){
+	public void setItinerary(LinkedList<Integer> itinerary){
 				
 		this.clearItinerary();
 		

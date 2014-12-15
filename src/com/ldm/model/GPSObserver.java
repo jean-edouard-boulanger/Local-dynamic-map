@@ -1,9 +1,7 @@
 package com.ldm.model;
 
-import java.util.ArrayDeque;
-
+import java.util.LinkedList;
 import com.ldm.model.geometry.Position;
-import com.ldm.model.geometry.Vect;
 
 public interface GPSObserver {
 	
@@ -13,7 +11,7 @@ public interface GPSObserver {
 	
 	public void onDestinationReached();
 	
-	public void onItinerarySet(ArrayDeque<Integer> itinerary);
+	public void onItinerarySet(LinkedList<Integer> itinerary);
 	
 	public void onNavigationStop();
 	

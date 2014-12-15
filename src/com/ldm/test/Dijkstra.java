@@ -22,7 +22,8 @@ public class Dijkstra {
 			e.printStackTrace();
 		}
 		
-		DijkstraAlgorithm da = new DijkstraAlgorithm();
-		System.out.println(da.compute(rn, 1, 7));
+		for(Integer i : rn.getRoads()){
+			System.out.println(i + " : " + rn.getRoadIntersections(i));
+		}
 	}
 }

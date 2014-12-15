@@ -13,8 +13,8 @@ import com.ldm.model.RoadNetwork;
 
 public class DijkstraAlgorithm {
 
-	public ArrayDeque<Integer> compute(RoadNetwork g, Integer vd, Integer va) {
-		ArrayDeque<Integer> path = new ArrayDeque<>();
+	public LinkedList<Integer> compute(RoadNetwork g, Integer vd, Integer va) {
+		LinkedList<Integer> path = new LinkedList<>();
 						
 		List<Integer> unvisitedIntersections = g.getIntersections();
 		List<Integer> visitedIntersections = new ArrayList<>();

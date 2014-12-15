@@ -10,6 +10,8 @@ import grph.in_memory.InMemoryGrph;
 
 public class RoadNetwork extends InMemoryGrph {
 
+	private final double defaultProximityThreshold = 1000.0;
+	
 	HashMap<Integer, Double> travelTimes = new HashMap<>();
 	HashMap<Integer, Position> positions = new HashMap<>();
 	HashMap<Integer, Integer> speedLimits = new HashMap<>();
@@ -67,6 +69,20 @@ public class RoadNetwork extends InMemoryGrph {
 	public Double getRoadDistance(int i0, int i1){
 		if(!this.hasRoad(i0, i1)){return null;}
 		return Position.evaluateDistance(this.getIntersectionPosition(i0), this.getIntersectionPosition(i1));
+	}
+	
+	public Pair<Integer, Integer> getRoadIntersections(Integer r){
+		if(r == null){return null;}
+		if(!this.hasRoad(r)){return null;}
+		
+		ArrayList<Integer> e = this.getVerticesIncidentToEdge(r).toIntegerArrayList();
+		if(e.get(0) == null || e.get(1) == null)
+			return null;
+		
+		if(this.hasRoad(e.get(0), e.get(1)))
+			return new Pair<Integer, Integer>(e.get(0), e.get(1));
+		
+		return new Pair<Integer, Integer>(e.get(1), e.get(0));
 	}
 	
 	public void setIntersectionPosition(int v, Position p){
@@ -151,6 +167,40 @@ public class RoadNetwork extends InMemoryGrph {
 	
 	public boolean hasRoad(int i0, int i1){
 		return this.getEdgesConnecting(i0, i1).size() > 0;
+	}
+	
+	public ArrayList<Integer> getAllNearIntersections(Position p, double distanceLimit){
+		ArrayList<Integer> intersections = this.getIntersections();
+		ArrayList<Integer> closeIntersections = new ArrayList<Integer>();
+		
+		for(Integer inter : intersections){
+			if(Position.evaluateDistance(p, this.getIntersectionPosition(inter)) < distanceLimit){
+				closeIntersections.add(inter);
+			}
+		}
+		return closeIntersections;
+	}
+	
+	public ArrayList<Integer> getAllNearIntersections(Position p){
+		return this.getAllNearIntersections(p, defaultProximityThreshold);
+	}
+	
+	public ArrayList<Integer> getAllNearRoads(Position p, double distanceLimit){
+		ArrayList<Integer> nearIntersections = this.getAllNearIntersections(p, distanceLimit);
+		ArrayList<Integer> closeRoads = new ArrayList<Integer>();
+		
+		Integer road;
+		for(Integer ni0 : nearIntersections){
+			for(Integer ni1 : nearIntersections){
+				road = this.getRoad(ni0, ni1);
+				if(road != null) closeRoads.add(road);
+			}
+		}
+		return closeRoads;
+	}
+
+	public ArrayList<Integer> getAllNearRoads(Position p){
+		return this.getAllNearRoads(p, defaultProximityThreshold);
 	}
 	
 	public Pair<Position, Position> getExtremePositions(){
