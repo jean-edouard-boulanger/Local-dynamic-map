@@ -14,11 +14,6 @@ public class RecentDataMessage extends Message {
 	public RecentDataMessage(RecentData recentData){ recentDatas.add(recentData); }
 	
 	public RecentDataMessage(ArrayList<RecentData> recentDatas){ this.recentDatas = recentDatas; }
-	
-	@Override
-	public boolean accept(MessageVisitor visitor, ACLMessage aclMsg) {
-		return visitor.onRecentDataMessage(this, aclMsg);
-	}
 
 	public ArrayList<RecentData> getRecentDatas() {
 		return recentDatas;
@@ -27,5 +22,10 @@ public class RecentDataMessage extends Message {
 	public void setRecentDatas(ArrayList<RecentData> recentDatas) {
 		this.recentDatas = recentDatas;
 	}	
+	
+	@Override
+	public boolean accept(MessageVisitor visitor, ACLMessage aclMsg) {
+		return visitor.onRecentDataMessage(this, aclMsg);
+	}
 }
 

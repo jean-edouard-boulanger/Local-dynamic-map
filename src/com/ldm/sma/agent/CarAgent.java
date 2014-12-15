@@ -79,9 +79,9 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 		
 		gps.subscribe(this);
 		
-		this.setCurrentPosition(this.gps.getRandomIntersectionPosition());
-		//this.gps.setCurrentPosition(this.gps.getMap().getIntersectionPosition(1));
-		this.gps.setDestination(this.gps.getRandomIntersection());
+		//this.setCurrentPosition(this.gps.getRandomIntersectionPosition());
+		this.setCurrentPosition(this.gps.getMap().getIntersectionPosition(1));
+		this.gps.setDestination(5);
 		
 		SwingUtilities.invokeLater(new Runnable() {
 			@Override
@@ -97,9 +97,7 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 		});
 				
 		this.addBehaviour(new HandleMessagesBehaviour(this));
-		
-		this.addBehaviour(new SendPokeBehaviour(this, 10000));
-				
+						
 		this.addBehaviour(new DriveBehaviour(this));
 	}
 	
@@ -115,8 +113,7 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 	
 	@Override
 	public void onIntersectionPassed(Position intersectionPosition) {
-		Integer nir = gps.getNextItineraryRoad();
-		LocalData newLocalData = this.recentDataManager.prepareNextLocalData(nir, this.getAID());
+		LocalData newLocalData = this.recentDataManager.prepareNextLocalData(gps.getNextItineraryRoad(), this.getAID());
 		if(newLocalData == null) return;
 		
 		Pair<RecentData, Boolean> lb = this.recentDataManager.merge(newLocalData);
@@ -124,6 +121,9 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 		
 		RecentDataMessage m = new RecentDataMessage(lb.first);
 		AgentHelper.sendMessageAround(this, ACLMessage.PROPAGATE, m);
+		
+		System.out.println("[DEBUG@"+ this.getLocalName() +"@onIntersectionPassed] RecentData sent "
+				+ "(Road: "+ lb.first.getRoadId() +"  AverageDriveTime: "+ lb.first.getAverageTravelTime() +")");
 	}
 	
 	@Override
@@ -156,19 +156,6 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 		
 	}
 	
-	
-	public class SendPokeBehaviour extends TickerBehaviour{
-		public SendPokeBehaviour(Agent a, long period) {
-			super(a, period);
-		}
-
-		@Override
-		protected void onTick() {
-			System.out.println("[DEBUG@"+ this.myAgent.getLocalName() +"] Poke sent");
-			AgentHelper.sendMessageAround(CarAgent.this, ACLMessage.INFORM, new PokeMessage());
-		}
-	}
-	
 	public class HandleMessagesBehaviour extends Behaviour{
 		
 		public HandleMessagesBehaviour(Agent agent){
@@ -177,10 +164,12 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 		
 		@Override
 		public void action() {
-           boolean received = AgentHelper.receiveMessageFromAround(CarAgent.this, MessageTemplate.MatchPerformative(ACLMessage.INFORM), new MessageVisitor(){
-                public boolean onIRMessage(RecentDataMessage message, ACLMessage aclMsg){
-                	return true;
-                }
+           boolean received = AgentHelper.receiveMessageFromAround(CarAgent.this, MessageTemplate.MatchPerformative(ACLMessage.PROPAGATE), new MessageVisitor(){
+        	   public boolean onRecentDataMessage(RecentDataMessage message, ACLMessage aclMsg){
+        		   System.out.println("[DEBUG@"+ CarAgent.this.getLocalName() +"@receiveMessageFromAround] Recent data received from " + aclMsg.getSender().getLocalName());
+        		   
+        		   return true;
+        	   }
             });		
            
            if(!received){
