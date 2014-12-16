@@ -30,6 +30,7 @@ import jade.core.behaviours.TickerBehaviour;
 import jade.gui.GuiEvent;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.LinkedList;
 
 import jade.lang.acl.ACLMessage;
@@ -49,7 +50,17 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 	public CarAgent(){
 		super();
 		propertyChangeCarAgent = new PropertyChangeSupport(this);
-		this.recentDataManager = new RecentDataManager();
+		
+		File mapFile = new File("gps.map");
+		try {
+			this.gps = new GPS(RoadNetworkFactory.BuildFromFile(mapFile));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		gps.subscribe(this);
+		
+		this.recentDataManager = new RecentDataManager(gps);
 	}
 	
 	public GPS getGPS(){
@@ -69,16 +80,7 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 	@Override
 	public void setup(){
 		super.setup();
-		
-		File mapFile = new File("gps.map");
-		try {
-			this.gps = new GPS(RoadNetworkFactory.BuildFromFile(mapFile));
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		
-		gps.subscribe(this);
-		
+				
 		//this.setCurrentPosition(this.gps.getRandomIntersectionPosition());
 		this.setCurrentPosition(this.gps.getMap().getIntersectionPosition(1));
 		this.gps.setDestination(5);
@@ -99,6 +101,8 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 		this.addBehaviour(new HandleMessagesBehaviour(this));
 						
 		this.addBehaviour(new DriveBehaviour(this));
+		
+		//this.addBehaviour(new BroadCastRecentDataBehaviour(this, 20000));
 	}
 	
 	@Override
@@ -156,6 +160,26 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 		
 	}
 	
+	public class BroadCastRecentDataBehaviour extends TickerBehaviour{
+
+		public BroadCastRecentDataBehaviour(Agent a, long period) {
+			super(a, period);
+		}
+
+		@Override
+		protected void onTick() {
+			ArrayList<Integer> roads = CarAgent.this.gps.getMap().getAllRoadsNear(CarAgent.this.getCurrentPosition(), 700);
+			ArrayList<RecentData> rds = CarAgent.this.recentDataManager.getRecentDataForRoads(roads);
+			if(rds.size() > 0){
+				System.out.println("[DEBUG@"+ CarAgent.this.getLocalName() +"@BroadCastRecentDataBehaviour] Broadcasting recent data around: " + rds);
+
+				RecentDataMessage rdMessage = new RecentDataMessage(rds);
+				AgentHelper.sendMessageAround(CarAgent.this, ACLMessage.PROPAGATE, rdMessage);
+			}
+		}
+		
+	}
+	
 	public class HandleMessagesBehaviour extends Behaviour{
 		
 		public HandleMessagesBehaviour(Agent agent){
@@ -166,7 +190,22 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 		public void action() {
            boolean received = AgentHelper.receiveMessageFromAround(CarAgent.this, MessageTemplate.MatchPerformative(ACLMessage.PROPAGATE), new MessageVisitor(){
         	   public boolean onRecentDataMessage(RecentDataMessage message, ACLMessage aclMsg){
-        		   System.out.println("[DEBUG@"+ CarAgent.this.getLocalName() +"@receiveMessageFromAround] Recent data received from " + aclMsg.getSender().getLocalName());
+        		   System.out.println("[DEBUG@"+ CarAgent.this.getLocalName() +"@receiveMessageFromAround] Recent data received from " + aclMsg.getSender().getLocalName()
+        		   		+ "(Road: " + message.getRecentDatas().get(0).getRoadId() + " Number contributors: " + message.getRecentDatas().get(0).getContributors().size() + ")");
+        		   
+        		   RecentDataMessage rdMessage = new RecentDataMessage();
+        		   
+        		   for(RecentData recentData : message.getRecentDatas()){
+        			   Pair<RecentData, Boolean> merged = CarAgent.this.recentDataManager.merge(recentData);
+        			   if(merged.second == true){
+        				   rdMessage.addRecentData(merged.first);
+        			   }
+        		   }
+        		   
+        		   if(rdMessage.size() > 0){
+        			   AgentHelper.sendMessageAround(CarAgent.this, ACLMessage.PROPAGATE, rdMessage);
+            		   System.out.println("[DEBUG@"+ CarAgent.this.getLocalName() +"@receiveMessageFromAround] Broadcasted " + rdMessage.size() + " merged recent data");
+        		   }
         		   
         		   return true;
         	   }

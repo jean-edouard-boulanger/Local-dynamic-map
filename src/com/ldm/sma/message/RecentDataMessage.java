@@ -23,6 +23,14 @@ public class RecentDataMessage extends Message {
 		this.recentDatas = recentDatas;
 	}	
 	
+	public void addRecentData(RecentData recentData){
+		this.recentDatas.add(recentData);
+	}
+	
+	public int size(){
+		return this.recentDatas.size();
+	}
+	
 	@Override
 	public boolean accept(MessageVisitor visitor, ACLMessage aclMsg) {
 		return visitor.onRecentDataMessage(this, aclMsg);

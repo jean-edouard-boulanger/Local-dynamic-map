@@ -31,12 +31,6 @@ public class DijkstraAlgorithm {
 			unvisitedIntersections.remove(currentVertex);
 			visitedIntersections.add(currentVertex);
 			
-			/*
-			System.out.println("Current vertex: " + currentVertex);
-			System.out.println("Unvisited: " + unvisitedIntersections);
-			System.out.println("Visited: " + visitedIntersections);
-			*/
-			
 			ArrayList<Integer> outNeighbors = g.getOutNeighbors(currentVertex).toIntegerArrayList();
 			
 			Integer procEdge = null;
@@ -47,6 +41,7 @@ public class DijkstraAlgorithm {
 				}
 								
 				procEdge = g.getEdgesConnecting(currentVertex, procVertex).toIntArrayList().get(0);
+								
 				double weight = shortestPaths.get(currentVertex).second + g.getRoadTravelTime(procEdge);
 								
 				if(weight < shortestPaths.get(procVertex).second){
@@ -54,15 +49,6 @@ public class DijkstraAlgorithm {
 					shortestPaths.get(procVertex).first = currentVertex;
 				}
 			}
-			
-			
-			/*
-			for(Map.Entry<Integer, Pair<Integer, Double>> shortestPath : shortestPaths.entrySet() ){
-				String distanceStr = (shortestPath.getValue().second == Double.MAX_VALUE) ? "oo" : shortestPath.getValue().second.toString();
-				String predStr = (shortestPath.getValue().first == null) ? "-" : shortestPath.getValue().first.toString();
-				System.out.println(shortestPath.getKey().toString() + " : " + predStr + "     " + distanceStr);
-			}
-			*/
 			
 			double minWeight = Double.MAX_VALUE;
 			Integer closestVertex = null;

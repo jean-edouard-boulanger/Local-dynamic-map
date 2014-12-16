@@ -4,9 +4,6 @@ import jade.core.AID;
 
 import java.util.Date;
 import java.util.HashSet;
-import java.util.Iterator;
-
-import org.omg.CosNaming.IstringHelper;
 
 import com.ldm.model.helper.CollectionsHelper;
 
@@ -74,6 +71,10 @@ public class RecentData {
 		return !this.isExpired();
 	}
 	
+	public Date getExpireDate(){
+		return new Date(createDate.getTime() + timeout);
+	}
+	
 	public boolean merge(LocalData localData){
 		if(localData == null){return false;}
 		
@@ -93,7 +94,7 @@ public class RecentData {
 	
 	public boolean merge(RecentData recentData){
 		if(recentData == null){return false;}
-		if(recentData == this){return false;}
+		if(recentData.equals(this)){return false;}
 		
 		if(this.contributors.size() == 0){
 			this.roadId = recentData.roadId;
@@ -119,14 +120,20 @@ public class RecentData {
 		if (o == this) return true;
 		if (!(o instanceof RecentData)) return false;
 		RecentData other = (RecentData) o;
+		if(this.roadId != other.getRoadId()) return false;
 		if(this.contributors.size() != other.contributors.size()) return false;
 		
 		for(AID aid : this.contributors){
-			if(other.contributors.contains(aid)){
+			if(!other.contributors.contains(aid)){
 				return false;
 			}
 		}
 		return true;
+	}
+
+	@Override
+	public String toString(){
+		return "{ R: " + this.roadId + " ~T: " + Math.round(averageTravelTime) + " C: " + contributors.size() + " }";
 	}
 	
 }

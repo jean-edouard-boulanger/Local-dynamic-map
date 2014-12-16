@@ -2,10 +2,12 @@ package com.ldm.model.manager;
 
 import jade.core.AID;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 
 import com.ldm.data.structure.Pair;
+import com.ldm.model.GPS;
 import com.ldm.model.LocalData;
 import com.ldm.model.RecentData;
 
@@ -13,9 +15,11 @@ public class RecentDataManager {
 	
 	private HashMap<Integer, RecentData> recentDatas = new HashMap<>();
 	
+	GPS gps;
+	
 	LocalData currentLocalData = null;
 	
-	public RecentDataManager(){}
+	public RecentDataManager(GPS gps){this.gps = gps;}
 	
 	public LocalData prepareNextLocalData(Integer road, AID issuer){
 		if(this.currentLocalData == null){
@@ -48,6 +52,24 @@ public class RecentDataManager {
 		this.currentLocalData = null;
 	}
 	
+	public RecentData getRecentDataForRoad(Integer road){
+		RecentData r = this.recentDatas.get(road);
+		if(r != null && r.isAlive()){
+			return r;
+		}
+		return null;
+	}
+
+	public ArrayList<RecentData> getRecentDataForRoads(ArrayList<Integer> roads){
+		ArrayList<RecentData> rds = new ArrayList<>();
+		RecentData rd = null;
+		for(Integer road : roads){
+			rd = this.getRecentDataForRoad(road);
+			if(rd != null){rds.add(rd);}
+		}
+		return rds;
+	}
+
 	public Pair<RecentData, Boolean> merge(LocalData localData){
 		if(localData == null){return new Pair<RecentData, Boolean>(null, false);}
 		
@@ -56,8 +78,10 @@ public class RecentDataManager {
 			rd = new RecentData();
 			this.recentDatas.put(localData.getRoadId(), rd);
 		}
-		
+				
 		boolean needSend = rd.merge(localData);
+		gps.getMap().setRoadUnoficialTravelTime(rd.getRoadId(), rd.getAverageTravelTime(), rd.getExpireDate());
+
 		return new Pair<RecentData, Boolean>(rd, needSend);
 	}
 	
@@ -69,8 +93,10 @@ public class RecentDataManager {
 			rd = new RecentData();
 			this.recentDatas.put(recentData.getRoadId(), rd);
 		}
+				
+		boolean needSend = rd.merge(recentData);		
+		gps.getMap().setRoadUnoficialTravelTime(rd.getRoadId(), rd.getAverageTravelTime(), rd.getExpireDate());
 		
-		boolean needSend = rd.merge(recentData);
 		return new Pair<RecentData, Boolean>(rd, needSend);
 	}
 }

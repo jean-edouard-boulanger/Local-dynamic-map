@@ -1,10 +1,12 @@
 package com.ldm.model;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 
 import com.ldm.data.structure.Pair;
 import com.ldm.model.geometry.Position;
+import com.ldm.model.helper.UnitHelper;
 
 import grph.in_memory.InMemoryGrph;
 
@@ -13,6 +15,8 @@ public class RoadNetwork extends InMemoryGrph {
 	private final double defaultProximityThreshold = 1000.0;
 	
 	HashMap<Integer, Double> travelTimes = new HashMap<>();
+	HashMap<Integer, Expirable<Double>> unoficialTravelTimes = new HashMap<>();
+	
 	HashMap<Integer, Position> positions = new HashMap<>();
 	HashMap<Integer, Integer> speedLimits = new HashMap<>();
 	HashMap<Integer, Disruption> roadDisruptions = new HashMap<>();
@@ -26,9 +30,9 @@ public class RoadNetwork extends InMemoryGrph {
 		int roadId = this.addDirectedSimpleEdge(i0, i1);
 		this.setRoadSpeedLimit(roadId, speedLimit);
 		
-		this.setRoadTravelTime(roadId, Position.evaluateDistance(getIntersectionPosition(i0), getIntersectionPosition(i1)) / speedLimit);
+		this.setRoadTravelTime(roadId, Position.evaluateDistance(getIntersectionPosition(i0), getIntersectionPosition(i1)) / UnitHelper.kmhTOms(speedLimit));
 	}
-	
+		
 	public void addBidirectionalRoad(int i0, int i1, int speedLimit){
 		this.addRoad(i0, i1, speedLimit);
 		this.addRoad(i1, i0, speedLimit);
@@ -56,14 +60,40 @@ public class RoadNetwork extends InMemoryGrph {
 		return this.containsVertex(i);
 	}
 	
-	public void setRoadTravelTime(int r, double travelTime){
+	public void setRoadTravelTime(Integer r, double travelTime){
+		if(r == null){return;}
 		if(!this.containsEdge(r)){return;}
 		this.travelTimes.put(r, travelTime);	
 	}
 	
-	public Double getRoadTravelTime(int r){
+	public Double getRoadTravelTime(Integer r){
+		if(r == null){return null;}
 		if(!this.containsEdge(r)){return null;}
+		
+		Double travelTime = this.getRoadUnoficialTravelTime(r);
+		if(travelTime != null){
+			return travelTime;
+		}
+		
 		return this.travelTimes.get(r);		
+	}
+	
+	public void setRoadUnoficialTravelTime(Integer r, double unoficialTravelTime, Date expireDate){
+		if(!this.hasRoad(r)){return;}
+		
+		Double travelTime = this.getRoadTravelTime(r);
+		if(unoficialTravelTime > travelTime){
+			System.out.println("[DEBUG@RoadNetwork@setRoadUnoficialTravelTime] Unoficial travel time set for road " + r + " because greater ("+ unoficialTravelTime +" > "+ travelTime +")");
+			this.unoficialTravelTimes.put(r, new Expirable<Double>(unoficialTravelTime, expireDate));
+		}
+	}
+	
+	public Double getRoadUnoficialTravelTime(Integer r){
+		if(!this.hasRoad(r)){return null;}
+		Expirable<Double> t = this.unoficialTravelTimes.get(r);
+		if(t == null){return null;}
+		
+		return t.getData();
 	}
 	
 	public Double getRoadDistance(int i0, int i1){
@@ -169,7 +199,7 @@ public class RoadNetwork extends InMemoryGrph {
 		return this.getEdgesConnecting(i0, i1).size() > 0;
 	}
 	
-	public ArrayList<Integer> getAllNearIntersections(Position p, double distanceLimit){
+	public ArrayList<Integer> getAllIntersectionsNear(Position p, double distanceLimit){
 		ArrayList<Integer> intersections = this.getIntersections();
 		ArrayList<Integer> closeIntersections = new ArrayList<Integer>();
 		
@@ -181,12 +211,12 @@ public class RoadNetwork extends InMemoryGrph {
 		return closeIntersections;
 	}
 	
-	public ArrayList<Integer> getAllNearIntersections(Position p){
-		return this.getAllNearIntersections(p, defaultProximityThreshold);
+	public ArrayList<Integer> getAllIntersectionsNear(Position p){
+		return this.getAllIntersectionsNear(p, defaultProximityThreshold);
 	}
 	
-	public ArrayList<Integer> getAllNearRoads(Position p, double distanceLimit){
-		ArrayList<Integer> nearIntersections = this.getAllNearIntersections(p, distanceLimit);
+	public ArrayList<Integer> getAllRoadsNear(Position p, double distanceLimit){
+		ArrayList<Integer> nearIntersections = this.getAllIntersectionsNear(p, distanceLimit);
 		ArrayList<Integer> closeRoads = new ArrayList<Integer>();
 		
 		Integer road;
@@ -200,7 +230,7 @@ public class RoadNetwork extends InMemoryGrph {
 	}
 
 	public ArrayList<Integer> getAllNearRoads(Position p){
-		return this.getAllNearRoads(p, defaultProximityThreshold);
+		return this.getAllRoadsNear(p, defaultProximityThreshold);
 	}
 	
 	public Pair<Position, Position> getExtremePositions(){
