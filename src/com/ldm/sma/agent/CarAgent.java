@@ -19,7 +19,6 @@ import com.ldm.model.manager.RecentDataManager;
 import com.ldm.sma.agent.helper.AgentHelper;
 import com.ldm.sma.message.RecentDataMessage;
 import com.ldm.sma.message.MessageVisitor;
-import com.ldm.sma.message.PokeMessage;
 import com.ldm.sma.behaviour.DriveBehaviour;
 import com.ldm.ui.WindowUI;
 import com.ldm.ui.WindowUI.carUIEventType;
@@ -30,7 +29,6 @@ import jade.core.behaviours.TickerBehaviour;
 import jade.core.behaviours.WakerBehaviour;
 import jade.gui.GuiEvent;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
@@ -107,7 +105,7 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 						
 		this.addBehaviour(new DriveBehaviour(this));
 		
-		//this.addBehaviour(new BroadCastRecentDataBehaviour(this, 20000));
+		this.addBehaviour(new BroadCastRecentDataBehaviour(this, 15000));
 	}
 	
 	@Override
@@ -159,6 +157,11 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 	
 	@Override
 	public void onItinerarySet(LinkedList<Integer> itinerary){
+		propertyChangeCarAgent.firePropertyChange(carUIEventType.itinerarySet.toString() , null, itinerary);
+	}
+	
+	@Override
+	public void onItineraryReplanned(LinkedList<Integer> itinerary){
 		propertyChangeCarAgent.firePropertyChange(carUIEventType.itinerarySet.toString() , null, itinerary);
 	}
 	
@@ -260,7 +263,7 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 		
 		@Override
 		public void onWake(){
-			System.out.println("[DEBUG@"+ CarAgent.this.getLocalName() +"@TimerBehaviour] Woke up because the car was too slow, will get en send checkpoint local data");
+			System.out.println("[DEBUG@"+ CarAgent.this.getLocalName() +"@TimerBehaviour] Woke up because the car was too slow, will get and send checkpoint local data");
 			
 			Double progress = CarAgent.this.gps.getCurrentRoadProgess();
 			if(progress == null) return;

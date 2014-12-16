@@ -27,7 +27,7 @@ public class GPS {
 	
 	private LinkedList<Integer> itinerary = new LinkedList<>();
 		
-	DijkstraAlgorithm algorithm = new DijkstraAlgorithm();
+	DijkstraAlgorithm pathFindingAlgorithm = new DijkstraAlgorithm();
 	
 	public GPS(){}
 	
@@ -74,7 +74,25 @@ public class GPS {
 		return map.getRoad(itinerary.get(0), itinerary.get(1));
 	}
 	
-	public void setCurrentPosition(Position currentPosition){
+	synchronized public void setNeedsReplan(Integer road){
+		if(!this.isNavigationModeOn()) return;
+		if(this.itinerary == null) return;
+		
+		for(int i = 0; i < this.itinerary.size() - 1; i++){
+			Integer r = this.map.getRoad(this.itinerary.get(i), this.itinerary.get(i+1));
+			if(r != null && r == road){
+				LinkedList<Integer> newItinerary = this.calculateItinerary(itinerary.getFirst(), itinerary.getLast());
+				if(!newItinerary.equals(this.itinerary)){
+					System.out.println("[DEBUG@GPS@setNeedsReplan] Current itinerary replanned: " + newItinerary + " was: " + this.itinerary);
+					this.itinerary = newItinerary;
+					this.notifyItineraryReplanned(newItinerary);
+					return;
+				}
+			}
+		}
+	}
+	
+	synchronized public void setCurrentPosition(Position currentPosition){
 		this.currentPosition = currentPosition;
 		
 		this.notifyPositionChanged(currentPosition);
@@ -139,7 +157,7 @@ public class GPS {
 	 * Starts the navigation mode.
 	 * @param destination Destination intersection identifier
 	 */
-	public void setDestination(int destination){
+	synchronized public void setDestination(int destination){
 		Integer lastInter = this.lastIntersection;
 		if(lastInter == null){
 			lastInter = this.FindClosestIntersection();
@@ -165,7 +183,7 @@ public class GPS {
 	 * @return A queue of intersections (Including the departure and arrival intersections)
 	 */
 	private LinkedList<Integer> calculateItinerary(int i0, int i1){
-		return algorithm.compute(this.map, i0, i1);
+		return pathFindingAlgorithm.compute(this.map, i0, i1);
 	}
 	
 	/**
@@ -290,6 +308,13 @@ public class GPS {
 		System.out.println("[DEBUG@GPS@setCurrentPosition] notifyItinerarySet: " + itinerary);
 		for(GPSObserver o : this.observers){
 			o.onItinerarySet(new LinkedList<Integer>(itinerary));
+		}
+	}
+	
+	public void notifyItineraryReplanned(LinkedList<Integer> itinerary){
+		System.out.println("[DEBUG@GPS@setCurrentPosition] notifyItinerarySet: " + itinerary);
+		for(GPSObserver o : this.observers){
+			o.onItineraryReplanned(new LinkedList<Integer>(itinerary));
 		}
 	}
 	

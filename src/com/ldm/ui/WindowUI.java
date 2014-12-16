@@ -47,9 +47,9 @@ public class WindowUI extends Application implements PropertyChangeListener {
 		GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
 		
 		Pane root = new Pane();
-		Scene scene = new Scene(root, gd.getDisplayMode().getWidth() * 0.65, gd.getDisplayMode().getHeight() * 0.65);
+		Scene scene = new Scene(root, gd.getDisplayMode().getWidth() * 0.60, gd.getDisplayMode().getHeight() * 0.60);
 		
-		final double offset = 90.0;
+		final double offset = 20.0;
 		final double mapHeight = scene.getHeight() - 2.0 * offset; 
 		final double mapWidth = scene.getWidth() - 2.0 * offset;
 		

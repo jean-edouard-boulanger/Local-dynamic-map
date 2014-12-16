@@ -94,6 +94,7 @@ public class RecentDataManager {
 				
 		boolean needSend = rd.merge(localData);
 		gps.getMap().setRoadUnoficialTravelTime(rd.getRoadId(), rd.getAverageTravelTime(), rd.getExpireDate());
+		gps.setNeedsReplan(rd.getRoadId());
 
 		return new Pair<RecentData, Boolean>(rd, needSend);
 	}
@@ -108,7 +109,8 @@ public class RecentDataManager {
 		}
 				
 		boolean needSend = rd.merge(recentData);		
-		gps.getMap().setRoadUnoficialTravelTime(rd.getRoadId(), rd.getAverageTravelTime(), rd.getExpireDate());
+		boolean travelTimeIncreased = gps.getMap().setRoadUnoficialTravelTime(rd.getRoadId(), rd.getAverageTravelTime(), rd.getExpireDate());
+		if(travelTimeIncreased) gps.setNeedsReplan(rd.getRoadId());
 		
 		return new Pair<RecentData, Boolean>(rd, needSend);
 	}

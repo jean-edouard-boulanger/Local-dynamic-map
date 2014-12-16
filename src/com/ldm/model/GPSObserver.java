@@ -13,6 +13,8 @@ public interface GPSObserver {
 	
 	public void onItinerarySet(LinkedList<Integer> itinerary);
 	
+	public void onItineraryReplanned(LinkedList<Integer> itinerary);
+	
 	public void onNavigationStop();
 	
 	public void onWayPointPassed(Integer intersection);

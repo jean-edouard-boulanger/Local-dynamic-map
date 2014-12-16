@@ -12,7 +12,7 @@ import grph.in_memory.InMemoryGrph;
 
 public class RoadNetwork extends InMemoryGrph {
 
-	private final double defaultProximityThreshold = 1000.0;
+	private final double defaultProximityThreshold = 700.0;
 	
 	HashMap<Integer, Double> travelTimes = new HashMap<>();
 	HashMap<Integer, Expirable<Double>> unoficialTravelTimes = new HashMap<>();
@@ -78,14 +78,18 @@ public class RoadNetwork extends InMemoryGrph {
 		return this.travelTimes.get(r);		
 	}
 	
-	public void setRoadUnoficialTravelTime(Integer r, double unoficialTravelTime, Date expireDate){
-		if(!this.hasRoad(r)){return;}
+	public boolean setRoadUnoficialTravelTime(Integer r, double unoficialTravelTime, Date expireDate){
+		if(!this.hasRoad(r)){return false;}
 		
 		Double travelTime = this.getRoadTravelTime(r);
-		if(unoficialTravelTime > travelTime){
-			System.out.println("[DEBUG@RoadNetwork@setRoadUnoficialTravelTime] Unoficial travel time set for road " + r + " because greater ("+ unoficialTravelTime +" > "+ travelTime +")");
+		if(unoficialTravelTime > travelTime && (Math.abs(travelTime - unoficialTravelTime) / travelTime) > 0.08){
+			System.out.println("[DEBUG@RoadNetwork@setRoadUnoficialTravelTime] Unoficial travel time set for road " + r + " "
+					+ "because more than 8% greater ("+ unoficialTravelTime +" > "+ travelTime +")");
+			
 			this.unoficialTravelTimes.put(r, new Expirable<Double>(unoficialTravelTime, expireDate));
+			return true;
 		}
+		return false;
 	}
 	
 	public Double getRoadUnoficialTravelTime(Integer r){
