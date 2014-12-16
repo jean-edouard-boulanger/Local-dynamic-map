@@ -27,20 +27,25 @@ import com.ldm.ui.WindowUI.carUIEventType;
 import jade.core.Agent;
 import jade.core.behaviours.Behaviour;
 import jade.core.behaviours.TickerBehaviour;
+import jade.core.behaviours.WakerBehaviour;
 import jade.gui.GuiEvent;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.LinkedList;
 
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 
 public class CarAgent extends ShortRangeAgent implements GPSObserver {
-	
+		
     private Position currentPosition = new Position();
         
     private GPS gps;
+    
+    private TimerBehaviour timerBehaviour;
+    private final long largestTimerValue = 600000;
     
     RecentDataManager recentDataManager;
     
@@ -117,17 +122,29 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 	
 	@Override
 	public void onIntersectionPassed(Position intersectionPosition) {
-		LocalData newLocalData = this.recentDataManager.prepareNextLocalData(gps.getNextItineraryRoad(), this.getAID());
-		if(newLocalData == null) return;
 		
-		Pair<RecentData, Boolean> lb = this.recentDataManager.merge(newLocalData);
-		if(lb.second == false) return;
+		if(this.timerBehaviour != null){
+			this.removeBehaviour(timerBehaviour);
+			this.timerBehaviour = null;
+		}
 		
-		RecentDataMessage m = new RecentDataMessage(lb.first);
-		AgentHelper.sendMessageAround(this, ACLMessage.PROPAGATE, m);
+		Integer nextRoad = gps.getNextItineraryRoad();
+						
+		LocalData newLocalData = this.recentDataManager.prepareNextLocalData(nextRoad, this.getAID());
+		this.mergeLocalData(newLocalData);
 		
-		System.out.println("[DEBUG@"+ this.getLocalName() +"@onIntersectionPassed] RecentData sent "
-				+ "(Road: "+ lb.first.getRoadId() +"  AverageDriveTime: "+ lb.first.getAverageTravelTime() +")");
+		if(nextRoad == null) return;
+		
+		Double travelTime = this.gps.getMap().getRoadTravelTime(nextRoad);
+		
+		if(travelTime == null) return;
+				
+		Date wakeDate = new Date( (new Date()).getTime() + travelTime.intValue() * 2000 );
+		System.out.println("[DEBUG@"+ CarAgent.this.getLocalName() +"@onIntersectionPassed] Timer will wake up a " + wakeDate + " if the car is too slow");
+		
+		this.timerBehaviour = new TimerBehaviour(this, wakeDate);
+		this.addBehaviour(timerBehaviour);
+		
 	}
 	
 	@Override
@@ -160,6 +177,19 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 		
 	}
 	
+	public void mergeLocalData(LocalData newLocalData){
+		if(newLocalData == null) return;
+		
+		Pair<RecentData, Boolean> lb = this.recentDataManager.merge(newLocalData);
+		if(lb.second == false) return;
+		
+		RecentDataMessage m = new RecentDataMessage(lb.first);
+		AgentHelper.sendMessageAround(this, ACLMessage.PROPAGATE, m);
+		
+		System.out.println("[DEBUG@"+ this.getLocalName() +"@onIntersectionPassed] RecentData sent "
+				+ "(Road: "+ lb.first.getRoadId() +"  AverageDriveTime: "+ lb.first.getAverageTravelTime() +")");
+	}
+	
 	public class BroadCastRecentDataBehaviour extends TickerBehaviour{
 
 		public BroadCastRecentDataBehaviour(Agent a, long period) {
@@ -179,7 +209,7 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 		}
 		
 	}
-	
+		
 	public class HandleMessagesBehaviour extends Behaviour{
 		
 		public HandleMessagesBehaviour(Agent agent){
@@ -219,6 +249,32 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 		@Override
 		public boolean done() {
 			return false;
+		}
+	}
+	
+	public class TimerBehaviour extends WakerBehaviour{
+
+		public TimerBehaviour(Agent a, Date wakeupDate) {
+			super(a, wakeupDate);
+		}
+		
+		@Override
+		public void onWake(){
+			System.out.println("[DEBUG@"+ CarAgent.this.getLocalName() +"@TimerBehaviour] Woke up because the car was too slow, will get en send checkpoint local data");
+			
+			Double progress = CarAgent.this.gps.getCurrentRoadProgess();
+			if(progress == null) return;
+			
+			LocalData partialLocalData = CarAgent.this.recentDataManager.getLocalDataCheckpoint(progress);
+			CarAgent.this.mergeLocalData(partialLocalData);
+			
+			Double remaining = (1 - progress) * CarAgent.this.gps.getMap().getRoadTravelTime(CarAgent.this.gps.getCurrentRoad()) * 2000;
+			Date wakeDate = new Date( (new Date()).getTime() + (long) Math.round(remaining) );
+			
+			System.out.println("[DEBUG@"+ CarAgent.this.getLocalName() +"@TimerBehaviour] Timer will wake up a " + wakeDate + " if the car is too slow");
+			
+			CarAgent.this.timerBehaviour = new TimerBehaviour(CarAgent.this, wakeDate);
+			CarAgent.this.addBehaviour(CarAgent.this.timerBehaviour);
 		}
 	}
 	

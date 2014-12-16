@@ -21,7 +21,7 @@ public class RecentDataManager {
 	
 	public RecentDataManager(GPS gps){this.gps = gps;}
 	
-	public LocalData prepareNextLocalData(Integer road, AID issuer){
+	synchronized public LocalData prepareNextLocalData(Integer road, AID issuer){
 		if(this.currentLocalData == null){
 			if(road == null || issuer == null) {return null;}
 			this.currentLocalData = new LocalData(road, issuer);
@@ -40,6 +40,19 @@ public class RecentDataManager {
 			this.currentLocalData = new LocalData(road, issuer);
 			return tempLocalData;
 		}
+	}
+	
+	synchronized public LocalData getLocalDataCheckpoint(double progressEnd){
+		if(this.currentLocalData == null) return null;
+		
+		this.currentLocalData.setProgressEnd(progressEnd);
+		this.currentLocalData.setEndTime(new Date());
+		LocalData tmpLocalData = this.currentLocalData;
+		
+		this.currentLocalData = new LocalData(tmpLocalData.getRoadId(), tmpLocalData.getIssuer());
+		this.currentLocalData.setProgressStart(progressEnd);
+		
+		return tmpLocalData;
 	}
 	
 	public LocalData popCurrentLocalData(){
