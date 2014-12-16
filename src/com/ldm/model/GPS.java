@@ -248,6 +248,10 @@ public class GPS {
 		return new Position(this.map.getIntersectionPosition(this.getRandomIntersection()));
 	}
 
+	public LinkedList<Integer> getItinerary(){
+		return this.itinerary;
+	}
+	
 	/**
 	 * @return The identifier of a random intersection in the map
 	 */

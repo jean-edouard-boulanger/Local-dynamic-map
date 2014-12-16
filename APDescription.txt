@@ -1,1 +1,1 @@
-( ap-description  :name "ldm" :ap-services (set ( ap-service  :name fipa.mts.mtp.http.std :type fipa.mts.mtp.http.std :addresses (sequence http://mbpdejenedouard:7778/acc))))
+( ap-description  :name "ldm" :ap-services (set ( ap-service  :name fipa.mts.mtp.http.std :type fipa.mts.mtp.http.std :addresses (sequence http://jeboulan-hz-1.etu.utc:7778/acc))))

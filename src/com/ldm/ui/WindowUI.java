@@ -30,6 +30,7 @@ public class WindowUI extends Application implements PropertyChangeListener {
 		wayPointPassed,
 		messageSent,
 		intersectionClicked,
+		explorationRequested,
 		messageReceived
 	}
 	
@@ -66,6 +67,11 @@ public class WindowUI extends Application implements PropertyChangeListener {
 							GuiEvent  ev = new GuiEvent(WindowUI.this, carUIEventType.intersectionClicked.ordinal());
 							ev.addParameter(intersection);
 							carAgent.postGuiEvent(ev);
+							
+							if(event.isShiftDown()){
+								ev = new GuiEvent(WindowUI.this, carUIEventType.explorationRequested.ordinal());
+								carAgent.postGuiEvent(ev);
+							}
 						}
 					}
 				}
