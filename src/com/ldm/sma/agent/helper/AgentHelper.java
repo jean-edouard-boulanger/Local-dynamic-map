@@ -26,8 +26,14 @@ public class AgentHelper {
 	}
 	
 	public static void sendMessageAround(ShortRangeAgent sender, int performative, Message data){
+		sendMessageAround(sender, performative, null, data);
+	}
+	
+	public static void sendMessageAround(ShortRangeAgent sender, int performative, String conversationId, Message data){
 		try{
 			ACLMessage msg = new ACLMessage(performative);
+			if(conversationId != null){msg.setConversationId(conversationId);}
+			
 			if(data != null)
 				msg.setContent(data.toJson());
 			

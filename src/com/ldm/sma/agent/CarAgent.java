@@ -15,8 +15,10 @@ import com.ldm.model.LocalData;
 import com.ldm.model.RecentData;
 import com.ldm.model.factory.RoadNetworkFactory;
 import com.ldm.model.geometry.Position;
+import com.ldm.model.helper.ColorHelper;
 import com.ldm.model.manager.RecentDataManager;
 import com.ldm.sma.agent.helper.AgentHelper;
+import com.ldm.sma.message.ExplorationAnswerMessage;
 import com.ldm.sma.message.ExplorationRequestMessage;
 import com.ldm.sma.message.RecentDataMessage;
 import com.ldm.sma.message.MessageVisitor;
@@ -34,6 +36,7 @@ import jade.gui.GuiEvent;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 
 import jade.lang.acl.ACLMessage;
@@ -110,7 +113,7 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 						
 		this.addBehaviour(new DriveBehaviour(this));
 		
-		this.addBehaviour(new BroadCastRecentDataBehaviour(this, 15000));
+		//this.addBehaviour(new BroadCastRecentDataBehaviour(this, 15000));
 	}
 	
 	@Override
@@ -215,7 +218,6 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 				AgentHelper.sendMessageAround(CarAgent.this, ACLMessage.PROPAGATE, rdMessage);
 			}
 		}
-		
 	}
 		
 	public class HandleMessagesBehaviour extends Behaviour{
@@ -254,11 +256,15 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
         		public boolean onExplorationRequestMessage(ExplorationRequestMessage message, ACLMessage aclMsg){
         			if(CarAgent.this.explorationBehaviours.containsKey(message.getExplorationRequestId())) return true;
         			
-        			if(message.getHops() >= message.getTtl()) return true;
+        			if(message.getTtl() == 0) return true;
         			
         			message.addHop();
         			
-        			CarAgent.this.explorationBehaviours.put(message.getExplorationRequestId(), new ExplorationBehaviour(CarAgent.this, message.getRequestIssuer()));
+        			ExplorationBehaviour explorationBehaviour = new ExplorationBehaviour(CarAgent.this, message);
+        			CarAgent.this.explorationBehaviours.put(message.getExplorationRequestId(), explorationBehaviour);
+        			CarAgent.this.addBehaviour(explorationBehaviour);
+        			
+        			System.err.println("[DEBUG@"+ CarAgent.this.getLocalName() +"@ExplorationBehaviour] Exploration request received from " + message.getRequestIssuer().getLocalName());
 
         			AgentHelper.sendMessageAround(CarAgent.this, ACLMessage.REQUEST, message);
         			
@@ -267,7 +273,7 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
         	   
            });
            
-           if(!received1 || !received2){
+           if(!received1 && !received2){
         	   block();
            }
 		}
@@ -309,24 +315,71 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 	}
 	
 	public class ExplorationBehaviour extends Behaviour{
+				
+		private final ExplorationRequestMessage initialRequestMessage;
 		
-		private AID requester;
+		private HashSet<AID> broadcastedAnswersIssuers = new HashSet<>();
 		
-		public ExplorationBehaviour(Agent a, AID requester) {
+		public ExplorationBehaviour(Agent a, ExplorationRequestMessage initialRequestMessage) {
 			super(a);
-			this.requester = requester;
-		}
-		
-		@Override
-		public void onStart() {
-			System.out.println("[DEBUG@"+ CarAgent.this.getLocalName() +"@ExplorationBehaviour] Exploration request received from " + requester.getLocalName());
+			this.initialRequestMessage = initialRequestMessage;
 		}
 		
 		@Override
 		public void action() {
 			
+			boolean received = AgentHelper.receiveMessageFromAround(CarAgent.this, MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.INFORM),
+					MessageTemplate.MatchConversationId(initialRequestMessage.getExplorationRequestId())), new MessageVisitor(){
+				
+				public boolean onExplorationAnswerMessage(ExplorationAnswerMessage message, ACLMessage aclMsg){
+					
+					if(ExplorationBehaviour.this.broadcastedAnswersIssuers.contains(message.getAnswerIssuer())) return true;
+					
+					broadcastedAnswersIssuers.add(message.getAnswerIssuer());
+					
+					if(ExplorationBehaviour.this.initialRequestMessage.getRequestIssuer() == CarAgent.this.getAID()){
+						System.out.println("[DEBUG@"+ CarAgent.this.getLocalName() +"@onExplorationAnswerMessage] Answer received from " + message.getAnswerIssuer().getLocalName() + ": " + message.getRecentDatas());
+						for(RecentData rd : message.getRecentDatas()){
+							CarAgent.this.recentDataManager.merge(rd);
+						}
+					}
+					else{
+						if(message.decreaseTtl() <= 0){return true;}
+						AgentHelper.sendMessageAround(CarAgent.this, ACLMessage.INFORM, ExplorationBehaviour.this.initialRequestMessage.getExplorationRequestId(), message);
+					}
+					
+					return true;
+				}
+				
+			});
+			
+			if(!received){
+				this.block();
+			}
+			
 		}
 
+		@Override
+		public void onStart(){
+			if(this.initialRequestMessage.getRequestIssuer().equals(CarAgent.this.getAID())) return;
+			
+			ExplorationAnswerMessage answerMessage = new ExplorationAnswerMessage();
+			answerMessage.setAnswerIssuer(CarAgent.this.getAID());
+			answerMessage.setTtl(this.initialRequestMessage.getHops() * 2);
+			
+			LinkedList<Integer> itinerary = initialRequestMessage.getItinerary();
+			for(int i = 0; i < initialRequestMessage.getItinerary().size() - 1; i++){
+				Integer road = CarAgent.this.getGPS().getMap().getRoad(itinerary.get(i), itinerary.get(i+1));
+				if(road != null){
+					answerMessage.addRecentData(CarAgent.this.recentDataManager.getRecentDataForRoad(road));
+				}
+			}
+			
+			if(!answerMessage.getRecentDatas().isEmpty()){
+				AgentHelper.sendMessageAround(CarAgent.this, ACLMessage.INFORM, initialRequestMessage.getExplorationRequestId(), answerMessage);
+			}
+		}
+		
 		@Override
 		public boolean done() {
 			return false;
@@ -340,20 +393,24 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 			this.gps.setDestination(intersection);
 		}
 		else if(event.getType() == carUIEventType.explorationRequested.ordinal()){
-			System.out.println("[DEBUG@"+ CarAgent.this.getLocalName() +"@explorationRequested] Exploration requested");
+			System.err.println("[DEBUG@"+ CarAgent.this.getLocalName() +"@explorationRequested] Exploration requested");
 			
 			String explorationId = this.getLocalName() + (new Date()).getTime();
-			this.explorationBehaviours.put(explorationId, new ExplorationBehaviour(CarAgent.this, CarAgent.this.getAID()));
-
+			
 			LinkedList<Integer> itinerary = this.gps.getItinerary();
 			double distance = Position.evaluateDistance(gps.getMap().getIntersectionPosition(itinerary.getFirst()), 
-					gps.getMap().getIntersectionPosition(itinerary.getFirst()));
+					gps.getMap().getIntersectionPosition(itinerary.getLast())) / 1000;
 			
 			ExplorationRequestMessage explorationRequestMessage = new ExplorationRequestMessage();
+			explorationRequestMessage.setExplorationRequestId(explorationId);
 			explorationRequestMessage.setItinerary(this.gps.getItinerary());
 			explorationRequestMessage.setRequestIssuer(CarAgent.this.getAID());
-			explorationRequestMessage.setTtl((int)distance * 5);
+			explorationRequestMessage.setTtl((int)(distance * 30));
 			
+			ExplorationBehaviour explorationBehaviour = new ExplorationBehaviour(CarAgent.this, explorationRequestMessage);
+			this.explorationBehaviours.put(explorationId, explorationBehaviour);
+			CarAgent.this.addBehaviour(explorationBehaviour);
+						
 			AgentHelper.sendMessageAround(CarAgent.this, ACLMessage.REQUEST , explorationRequestMessage);
 		}
 	}

@@ -26,7 +26,7 @@ public abstract class ShortRangeAgent extends GuiAgent {
 	private static final MessageTemplate filterDistanceProtocol = MessageTemplate.MatchProtocol(filterDistanceProtocolName);
 	private static final String SRATypeName = "SRA";
 	
-	private double range = 500;
+	private double range = 400;
 	private DFAgentDescription SRATemplate = null;
 	
 	public abstract Position getCurrentPosition();

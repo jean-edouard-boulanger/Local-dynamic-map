@@ -44,7 +44,7 @@ public class RoadNetworkFactory {
 				Integer speedLimit = Integer.parseInt(attrs[2]);
 				
 				map.addRoad(id0, id1, speedLimit);
-				if(attrs[3].equals("b")){
+				if(attrs.length >= 4 && attrs[3].equals("b")){
 					map.addRoad(id1, id0, speedLimit);
 				}
 			}
@@ -62,6 +62,9 @@ public class RoadNetworkFactory {
 				Double disruptionLevel = Double.parseDouble(attrs[4]);
 				
 				map.addRoadDisruption(id0, id1, new Disruption(startsAt, endsAt, disruptionLevel));
+				if(attrs.length >= 6 && attrs[5].equals("b")){
+					map.addRoadDisruption(id0, id1, new Disruption(endsAt, startsAt, disruptionLevel));
+				}
 			}
 		}
 		br.close();

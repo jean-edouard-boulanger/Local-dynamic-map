@@ -7,20 +7,33 @@ import java.awt.GraphicsEnvironment;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.util.Date;
 import java.util.LinkedList;
+import java.util.Observable;
 
 import com.ldm.model.geometry.Position;
+import com.ldm.model.log.Log;
 import com.ldm.sma.agent.CarAgent;
 import com.ldm.ui.components.NavigationMap;
 
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.scene.Scene;
+import javafx.scene.control.TableCell;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableColumn.CellDataFeatures;
+import javafx.scene.control.TableRow;
+import javafx.scene.control.TableView;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
+import javafx.util.Callback;
 
 public class WindowUI extends Application implements PropertyChangeListener {
 
@@ -37,8 +50,12 @@ public class WindowUI extends Application implements PropertyChangeListener {
 	private CarAgent carAgent;
 	private Stage primaryStage;
 
+	private TableView logTableView;
+	private final ObservableList<Log> logTableViewData = FXCollections.observableArrayList();
+	
 	NavigationMap navigationMap;
 	
+	@SuppressWarnings("unchecked")
 	@Override
 	public void start(Stage primaryStage) throws Exception {	
 		this.primaryStage = primaryStage;
@@ -48,10 +65,11 @@ public class WindowUI extends Application implements PropertyChangeListener {
 		GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
 		
 		Pane root = new Pane();
-		Scene scene = new Scene(root, gd.getDisplayMode().getWidth() * 0.60, gd.getDisplayMode().getHeight() * 0.60);
+		Scene scene = new Scene(root, gd.getDisplayMode().getWidth() * 0.60, gd.getDisplayMode().getHeight() * 0.80);
+		root.setStyle("-fx-background-color: white;");
 		
 		final double offset = 20.0;
-		final double mapHeight = scene.getHeight() - 2.0 * offset; 
+		final double mapHeight = 0.7 * scene.getHeight();
 		final double mapWidth = scene.getWidth() - 2.0 * offset;
 		
 		navigationMap = new NavigationMap(this.carAgent.getGPS().getMap(), mapHeight, mapWidth);
@@ -79,7 +97,45 @@ public class WindowUI extends Application implements PropertyChangeListener {
 		});
 		
 		root.getChildren().add(navigationMap);
-				
+		
+		final double logTableViewWidth = mapWidth;
+		final double logTableViewHeight = scene.getHeight() - (4 * offset + mapHeight);
+		
+		logTableView = new TableView(logTableViewData);
+		logTableView.setRowFactory(new Callback<TableView<Log>, TableRow<Log>>() {
+	        @Override
+	        public TableRow<Log> call(TableView<Log> tableView) {
+	            final TableRow<Log> row = new TableRow<Log>() {
+	                @Override
+	                protected void updateItem(Log row, boolean empty) {
+	                    super.updateItem(row, empty);
+	                    if (!empty && row.getStyle() != null){
+	                        styleProperty().set(row.getStyle());
+	                    }
+	                }
+	            };
+	            return row;
+	        }
+	    });
+		
+		TableColumn timestampColumn = new TableColumn("Timestamp");
+		timestampColumn.setPrefWidth(0.20 * logTableViewWidth);
+		timestampColumn.setCellValueFactory(new PropertyValueFactory<Log, String>("formattedLogDate"));
+		
+		TableColumn messageColumn = new TableColumn("Evenement");
+		messageColumn.setPrefWidth(0.80 * logTableViewWidth);
+		messageColumn.setCellValueFactory(new PropertyValueFactory<Log, String>("message"));
+
+		
+		logTableView.setEditable(false);		
+		logTableView.relocate(offset, 3 * offset + mapHeight);
+		logTableView.setPrefWidth(mapWidth);
+		logTableView.setPrefHeight(logTableViewHeight);
+		
+		logTableView.getColumns().addAll(timestampColumn, messageColumn);
+		
+		root.getChildren().add(logTableView);
+		
 		primaryStage.setScene(scene);
 		primaryStage.show();
 	}
@@ -94,8 +150,7 @@ public class WindowUI extends Application implements PropertyChangeListener {
 			Platform.runLater(new Runnable(){
 				@Override
 				public void run() {
-					Position newPosition = (Position)evt.getNewValue();
-								
+					Position newPosition = (Position)evt.getNewValue();			
 					navigationMap.setCarPosition(newPosition);
 				}
 			});
@@ -104,7 +159,9 @@ public class WindowUI extends Application implements PropertyChangeListener {
 			Platform.runLater(new Runnable(){
 				@Override
 				public void run() {
-					navigationMap.setItinerary((LinkedList<Integer>)evt.getNewValue());
+					LinkedList<Integer> itinerary = (LinkedList<Integer>)evt.getNewValue();
+					WindowUI.this.log(new Log("Modification de l'itinéraire courant: " + itinerary));
+					navigationMap.setItinerary(itinerary);
 				}
 			});
 		}
@@ -151,5 +208,9 @@ public class WindowUI extends Application implements PropertyChangeListener {
 	
 	public void setCarAgent(CarAgent carAgent){
 		this.carAgent = carAgent;
+	}
+	
+	private void log(Log log){
+		this.logTableViewData.add(log);
 	}
 }
