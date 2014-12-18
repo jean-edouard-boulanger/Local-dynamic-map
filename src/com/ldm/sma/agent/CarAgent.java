@@ -354,13 +354,14 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 	public class ExplorationBehaviour extends Behaviour{
 				
 		private final ExplorationRequestMessage initialRequestMessage;
-		
-		private Date endDate = new Date();
-		
+		private final Date endDate;
+				
 		private HashSet<AID> broadcastedAnswersIssuers = new HashSet<>();
 		
 		public ExplorationBehaviour(Agent a, ExplorationRequestMessage initialRequestMessage) {
 			super(a);
+			double distance = Position.evaluateDistance(CarAgent.this.getCurrentPosition(), CarAgent.this.gps.getMap().getIntersectionPosition(initialRequestMessage.getItinerary().getLast()));
+			this.endDate = new Date(System.currentTimeMillis() + (long)(distance * 4));
 			this.initialRequestMessage = initialRequestMessage;
 		}
 		
@@ -433,12 +434,36 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 		
 		@Override
 		public int onEnd(){
+			CarAgent.this.log(new ExplorationLog("Terminaison de l'exploration " + this.initialRequestMessage.getExplorationRequestId()));
+			
+			CarAgent.this.previousExplorationRequests.add(this.initialRequestMessage.getExplorationRequestId());
+			ParallelBehaviour bhv = CarAgent.this.explorationBehaviours.get(this.initialRequestMessage.getExplorationRequestId());
+			CarAgent.this.explorationBehaviours.remove(this.initialRequestMessage.getExplorationRequestId());
+			
+			if(CarAgent.this.getAID().equals(this.initialRequestMessage.getRequestIssuer())){
+				
+				LinkedList<Integer> cit = CarAgent.this.gps.getItinerary();
+				boolean itineraryChanged = false;
+				for(int i = 0; i < cit.size(); i++){
+					if(!cit.get(cit.size() - 1 - i).equals(this.initialRequestMessage.getItinerary().get(this.initialRequestMessage.getItinerary().size() - 1 - i))){
+						itineraryChanged = true;
+						break;
+					}
+				}
+				
+				if(itineraryChanged){
+					CarAgent.this.log(new ExplorationLog("Lancement d'une vague d'exploration car l'itinéraire a été amélioré"));
+					CarAgent.this.initializeExplorationRequest();
+				}
+			}
+			
+			CarAgent.this.removeBehaviour(bhv);
 			return 0;
 		}
 		
 		@Override
 		public boolean done() {
-			return false;
+			return System.currentTimeMillis() > this.endDate.getTime();
 		}
 	}
 	
@@ -487,16 +512,16 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 		
 		LinkedList<Integer> itinerary = this.gps.getItinerary();
 		double distance = Position.evaluateDistance(gps.getMap().getIntersectionPosition(itinerary.getFirst()), 
-				gps.getMap().getIntersectionPosition(itinerary.getLast())) / 1000;
+				gps.getMap().getIntersectionPosition(itinerary.getLast()));
 		
 		ExplorationRequestMessage explorationRequestMessage = new ExplorationRequestMessage();
 		explorationRequestMessage.setExplorationRequestId(explorationId);
 		explorationRequestMessage.setItinerary(new LinkedList<Integer>(this.gps.getItinerary()));
 		explorationRequestMessage.setRequestIssuer(CarAgent.this.getAID());
-		explorationRequestMessage.setTtl((int)(distance * 30));
+		explorationRequestMessage.setTtl((int)(distance * 0.03));
 		
 		this.log(new ExplorationLog("Initialisation d'une requête d'exploration ("+ explorationId +")"));
-		
+				
 		ParallelBehaviour explorationBehaviour = new ParallelBehaviour(ParallelBehaviour.WHEN_ALL);
 		explorationBehaviour.addSubBehaviour(new ExplorationBehaviour(CarAgent.this, explorationRequestMessage));
 		this.explorationBehaviours.put(explorationId, explorationBehaviour);
