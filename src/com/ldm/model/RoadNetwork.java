@@ -205,6 +205,8 @@ public class RoadNetwork extends InMemoryGrph {
 	
 	public ArrayList<Integer> getAllIntersectionsNear(Position p, double distanceLimit){
 		ArrayList<Integer> intersections = this.getIntersections();
+		if(p == null){return intersections;}
+		
 		ArrayList<Integer> closeIntersections = new ArrayList<Integer>();
 		
 		for(Integer inter : intersections){
@@ -233,8 +235,23 @@ public class RoadNetwork extends InMemoryGrph {
 		return closeRoads;
 	}
 
-	public ArrayList<Integer> getAllNearRoads(Position p){
+	public ArrayList<Integer> getAllRoadsNear(Position p){
 		return this.getAllRoadsNear(p, defaultProximityThreshold);
+	}
+	
+	public boolean isRoadNear(Integer road, Position p, double distanceLimit){
+		if(road == null){return false;}
+		if(p == null){return false;}
+		
+		Pair<Integer, Integer> inters = this.getRoadIntersections(road);
+		if(inters == null){return false;}
+		
+		Double d1 = Position.evaluateDistance(p, this.getIntersectionPosition(inters.first));
+		Double d2 = Position.evaluateDistance(p, this.getIntersectionPosition(inters.second));
+		
+		if(d1 == null || d2 == null){return false;}
+		
+		return d1 <= distanceLimit && d2 <= distanceLimit;
 	}
 	
 	public Pair<Position, Position> getExtremePositions(){

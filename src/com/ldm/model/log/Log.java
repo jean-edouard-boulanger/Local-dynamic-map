@@ -7,7 +7,6 @@ public class Log {
 
 	private Date logDate = new Date();
 	private String message;
-	private final String style = null;
 	
 	public Log(){}
 	
@@ -40,7 +39,6 @@ public class Log {
 	}
 	
 	public String getStyle(){
-		return this.style;
+		return "-fx-background-color: #FFFFFF";
 	}
-	
 }

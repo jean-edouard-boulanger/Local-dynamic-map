@@ -2,8 +2,6 @@ package com.ldm.sma.message;
 
 import java.util.LinkedList;
 
-import com.ldm.model.geometry.Position;
-
 import jade.core.AID;
 import jade.lang.acl.ACLMessage;
 
@@ -12,10 +10,13 @@ public class ExplorationRequestMessage extends Message {
 	private AID requestIssuer;
 	private String explorationRequestId;
 	
+	
 	private LinkedList<Integer> itinerary;
 	
 	private int hops = 1;
 	private int ttl;
+	private int sequenceNumber = 0;
+
 	
 	public ExplorationRequestMessage(){}
 
@@ -62,6 +63,18 @@ public class ExplorationRequestMessage extends Message {
 	public void addHop(){
 		this.ttl--;
 		this.hops++;
+	}
+	
+	public int increaseSequenceNumber(){
+		return ++this.sequenceNumber;
+	}
+	
+	public int getSequenceNumber(){
+		return this.sequenceNumber;
+	}
+	
+	public void setSequenceNumber(int sequenceNumber){
+		this.sequenceNumber = sequenceNumber;
 	}
 	
 	@Override

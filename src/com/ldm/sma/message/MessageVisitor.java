@@ -6,8 +6,6 @@ public class MessageVisitor{
 	
     public boolean onRecentDataMessage(RecentDataMessage message, ACLMessage aclMsg){return false;}
 
-	public boolean onPokeMessage(PokeMessage message, ACLMessage aclMsg){return false;}
-
 	public boolean onExplorationRequestMessage(ExplorationRequestMessage message, ACLMessage aclMsg){return false;}
 	public boolean onExplorationAnswerMessage(ExplorationAnswerMessage message, ACLMessage aclMsg){return false;}
 	

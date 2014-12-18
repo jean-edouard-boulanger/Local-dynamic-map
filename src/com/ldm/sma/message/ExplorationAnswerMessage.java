@@ -51,6 +51,5 @@ public class ExplorationAnswerMessage extends Message {
 	@Override
 	public boolean accept(MessageVisitor visitor, ACLMessage aclMsg) {
 		return visitor.onExplorationAnswerMessage(this, aclMsg);
-	}
-	
+	}	
 }

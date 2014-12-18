@@ -233,9 +233,11 @@ public class NavigationMap extends Group {
 	public void notifyMessageReceived(Position p){
 		Position sp = this.getScaledPosition(p);
 		
+		Group g = new Group();
 		Circle c = new Circle(sp.getX(), sp.getY(), 4, Color.YELLOW);
+		g.getChildren().add(c);
 		
-		FadeTransition ft = new FadeTransition(Duration.millis(1000), c);
+		FadeTransition ft = new FadeTransition(Duration.millis(1000), g);
 		ft.setFromValue(1.0);
 		ft.setToValue(0.0);
 		ft.setDelay(Duration.millis(800));
@@ -246,10 +248,10 @@ public class NavigationMap extends Group {
 			}
 		});
 		
-		c.toFront();
+		g.toFront();
 		car.toFront();
 		
-		this.getChildren().add(c);
+		this.getChildren().add(g);
 		
 		this.car.notifyMessageReceived();
 		ft.play();

@@ -133,7 +133,7 @@ public class RecentData {
 
 	@Override
 	public String toString(){
-		return "{ R: " + this.roadId + " ~T: " + Math.round(averageTravelTime) + " C: " + contributors.size() + " }";
+		return "Route: "+ roadId +", Temps: "+ Math.round(averageTravelTime) +", Contributeurs: " + contributors.size();
 	}
 	
 }

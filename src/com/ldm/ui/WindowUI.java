@@ -12,6 +12,7 @@ import java.util.LinkedList;
 import java.util.Observable;
 
 import com.ldm.model.geometry.Position;
+import com.ldm.model.log.GPSLog;
 import com.ldm.model.log.Log;
 import com.ldm.sma.agent.CarAgent;
 import com.ldm.ui.components.NavigationMap;
@@ -41,10 +42,12 @@ public class WindowUI extends Application implements PropertyChangeListener {
 		carMoved,
 		itinerarySet,
 		wayPointPassed,
+		destinationReached,
 		messageSent,
 		intersectionClicked,
 		explorationRequested,
-		messageReceived
+		messageReceived,
+		logPosted
 	}
 	
 	private CarAgent carAgent;
@@ -69,7 +72,7 @@ public class WindowUI extends Application implements PropertyChangeListener {
 		root.setStyle("-fx-background-color: white;");
 		
 		final double offset = 20.0;
-		final double mapHeight = 0.7 * scene.getHeight();
+		final double mapHeight = 0.6 * scene.getHeight();
 		final double mapWidth = scene.getWidth() - 2.0 * offset;
 		
 		navigationMap = new NavigationMap(this.carAgent.getGPS().getMap(), mapHeight, mapWidth);
@@ -120,10 +123,14 @@ public class WindowUI extends Application implements PropertyChangeListener {
 		
 		TableColumn timestampColumn = new TableColumn("Timestamp");
 		timestampColumn.setPrefWidth(0.20 * logTableViewWidth);
+		timestampColumn.setMinWidth(0.20 * logTableViewWidth);
+		timestampColumn.setMaxWidth(0.20 * logTableViewWidth);
 		timestampColumn.setCellValueFactory(new PropertyValueFactory<Log, String>("formattedLogDate"));
 		
 		TableColumn messageColumn = new TableColumn("Evenement");
-		messageColumn.setPrefWidth(0.80 * logTableViewWidth);
+		messageColumn.setPrefWidth(0.78 * logTableViewWidth);
+		messageColumn.setMinWidth(0.78 * logTableViewWidth);
+		messageColumn.setMaxWidth(0.78 * logTableViewWidth);
 		messageColumn.setCellValueFactory(new PropertyValueFactory<Log, String>("message"));
 
 		
@@ -160,7 +167,6 @@ public class WindowUI extends Application implements PropertyChangeListener {
 				@Override
 				public void run() {
 					LinkedList<Integer> itinerary = (LinkedList<Integer>)evt.getNewValue();
-					WindowUI.this.log(new Log("Modification de l'itinéraire courant: " + itinerary));
 					navigationMap.setItinerary(itinerary);
 				}
 			});
@@ -169,6 +175,7 @@ public class WindowUI extends Application implements PropertyChangeListener {
 			Platform.runLater(new Runnable(){
 				@Override
 				public void run() {
+					Integer wayPoint = (Integer)evt.getNewValue();
 					navigationMap.popNextWayPoint();
 				}
 			});
@@ -186,6 +193,15 @@ public class WindowUI extends Application implements PropertyChangeListener {
 				@Override
 				public void run() {
 					navigationMap.notifyMessageReceived((Position)evt.getNewValue());
+				}
+			});
+		}
+		else if(evt.getPropertyName().equals(carUIEventType.logPosted.toString())){
+			Platform.runLater(new Runnable(){
+				@Override
+				public void run() {
+					Log log = (Log)evt.getNewValue();
+					WindowUI.this.log(log);				
 				}
 			});
 		}
@@ -212,5 +228,6 @@ public class WindowUI extends Application implements PropertyChangeListener {
 	
 	private void log(Log log){
 		this.logTableViewData.add(log);
+		this.logTableView.scrollTo(logTableViewData.size() - 1);
 	}
 }
