@@ -51,27 +51,44 @@ import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 
 public class CarAgent extends ShortRangeAgent implements GPSObserver {
-		
+	
+	/* Indique la position courante du vehicule */
     private Position currentPosition = new Position();
         
+    
+    /* GPS equipant la voiture */
     private GPS gps;
     
+    
+    /* Behaviour gerant l'expiration de l'enregistrement d'une donnee locale */
     private TimerBehaviour timerBehaviour;
     private final long largestTimerValue = 600000;
     
+    
+    /* Set stockant les identifiants des precedantes explorations */
     private HashSet<String> previousExplorationRequests = new HashSet<String>();
+    
+    /* Hashmap stockant les behaviours des explorations courantes (Identifiant exploration => Behaviour) */
     private HashMap<String, ParallelBehaviour> explorationBehaviours = new HashMap<>();
+    
+    /* Hashmap stockant les identifiants des sequences de requête d'exploration courantes (Identifiant exploration => Sequence) */
     private HashMap<String, HashSet<Integer>> explorationRequests = new HashMap<>();
     
+    
+    /* Manager gerant les donnees locales et recentes */
     RecentDataManager recentDataManager;
     
 	private PropertyChangeSupport propertyChangeCarAgent;
 	WindowUI carUI = null;
-		
+	
+	/**
+	 * Constructeur de l'agent voiture
+	 */
 	public CarAgent(){
 		super();
 		propertyChangeCarAgent = new PropertyChangeSupport(this);
 		
+		/* Creation d'une carte GPS a partir du fichier map */
 		File mapFile = new File("gps.map");
 		try {
 			this.gps = new GPS(RoadNetworkFactory.BuildFromFile(mapFile));
@@ -79,22 +96,35 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 			e.printStackTrace();
 		}
 		
+		/* L'agent voiture souscrit aux notifications du GPS */
 		gps.subscribe(this);
 		
 		this.recentDataManager = new RecentDataManager(gps);
 	}
 	
+	/**
+	 * @return Instance du GPS equipant la voiture
+	 */
 	public GPS getGPS(){
 		return this.gps;
 	}
 	
+	/**
+	 * @return Position courante de la voiture
+	 */
 	@Override
 	public Position getCurrentPosition(){
 		return this.currentPosition;
 	}
 	
+	/**
+	 * Permet d'indiquer la position courante de la voiture
+	 * @param p Position de la voiture
+	 */
 	public void setCurrentPosition(Position p){		
 		this.currentPosition = p;
+		
+		/* Notifie le GPS que la voiture a change de position */
 		this.gps.setCurrentPosition(p);
 	}
 	
@@ -102,10 +132,10 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 	public void setup(){
 		super.setup();
 				
-		//this.setCurrentPosition(this.gps.getRandomIntersectionPosition());
 		this.setCurrentPosition(this.gps.getMap().getIntersectionPosition(1));
 		this.gps.setDestination(5);
 		
+		/* Lancement de l'interface graphique pour une voiture */
 		SwingUtilities.invokeLater(new Runnable() {
 			@Override
 			public void run() {
@@ -118,27 +148,47 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 				});
 			}
 		});
-				
+		
+		/* Ajout du Behaviour traitant les messages principaux */
 		this.addBehaviour(new HandleMessagesBehaviour(this));
-						
+		
+		/* Ajout du Behaviour conduisant la voiture */
 		this.addBehaviour(new DriveBehaviour(this));
 		
-		//this.addBehaviour(new BroadCastRecentDataBehaviour(this, 15000));
+		/* Ajout du Behaviour envoyant periodiquement les donnees recentes aux vehicules alentours  */
+		this.addBehaviour(new BroadcastRecentDataBehaviour(this, 15000));
 	}
 	
+	/**
+	 * Fonction executee lorsque la voiture reçoit n'importe quel message de l'exterieur
+	 * Notifie l'interface utilisateur de la reception
+	 * @param aclMsg Message reçu
+	 * @param sentAtPosition Position a laquelle le message a ete envoye
+	 */
 	@Override
 	public void onMessageReceivedFromAround(ACLMessage aclMsg, Position sentAtPosition){
 		propertyChangeCarAgent.firePropertyChange(carUIEventType.messageReceived.toString(), null, sentAtPosition);
 	}
 	
+	/**
+	 * Fonction executee lorsque la voiture envoie un message vers l'exterieur
+	 * Notifie l'interface utilisateur de l'envoie
+	 * @param aclMsg Message envoye
+	 * @param sentAtPosition Position a laquelle le message a ete envoye
+	 */
 	@Override
 	public void onMessageSentAround(ACLMessage aclMsg, Position sentAtPosition){
 		propertyChangeCarAgent.firePropertyChange(carUIEventType.messageSent.toString(), null, sentAtPosition);
 	}
 	
+	/**
+	 * Fonction executee lorsque la voiture passe une intersection
+	 * Utilisee pour traiter l'enregistrement des informations locales
+	 */
 	@Override
 	public void onIntersectionPassed(Position intersectionPosition) {
 		
+		/* Si il existe, supprime le timer courant */
 		if(this.timerBehaviour != null){
 			this.removeBehaviour(timerBehaviour);
 			this.timerBehaviour = null;
@@ -146,8 +196,12 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 		
 		Integer nextRoad = gps.getNextItineraryRoad();
 	
+		/* Prepare l'enregistrement de l'information locale pour la prochaine route 
+		 * Recupère la donnee locale precedemment enregistree si elle existe
+		 */
 		LocalData newLocalData = this.recentDataManager.prepareNextLocalData(nextRoad, this.getAID());
 	
+		/* Fusionne la donnee locale avec les donnees recentes */
 		this.mergeLocalData(newLocalData);
 		
 		if(nextRoad == null) return;
@@ -155,7 +209,8 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 		Double travelTime = this.gps.getMap().getRoadTravelTime(nextRoad);
 		
 		if(travelTime == null) return;
-				
+		
+		/* On ajoute un timer si l'enregistrement d'une nouvelle donnee locale a debute */
 		Date wakeDate = new Date( (new Date()).getTime() + travelTime.intValue() * 2000 );
 		System.out.println("[DEBUG@"+ CarAgent.this.getLocalName() +"@onIntersectionPassed] Timer will wake up a " + wakeDate + " if the car is too slow");
 		
@@ -163,63 +218,104 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 		this.addBehaviour(timerBehaviour);	
 	}
 	
+	/**
+	 * Fonction executee par la voiture lorsque sa position change
+	 * Envoie les nouvelles coordonnees de la voiture a l'interface utilisateur
+	 * @param newPosition Nouvelle position de la voiture
+	 */
 	@Override
 	public void onPositionChanged(Position newPosition) {
 		propertyChangeCarAgent.firePropertyChange(carUIEventType.carMoved.toString() , null, newPosition);
 	}
 	
+	/**
+	 * Fonction executee par la voiture lorsqu'elle atteint sa destination
+	 * Notifie l'arrivee a l'interface utilisateur
+	 */
 	@Override
 	public void onDestinationReached() {
 		this.log(new GPSLog("Destination atteinte"));
 		propertyChangeCarAgent.firePropertyChange(carUIEventType.destinationReached.toString() , null, null);
 	}
 	
+	/**
+	 * Fonction executee par la voiture lorsque l'itineraire du GPS est change
+	 * Envoie le nouvel itineraire a l'interface utilisateur
+	 * @param itinerary Nouvel itineraire
+	 */
 	@Override
 	public void onItinerarySet(LinkedList<Integer> itinerary){
-		this.log(new GPSLog("Itinéraire modifié: " + itinerary));
+		this.log(new GPSLog("Itineraire modifie: " + itinerary));
 		propertyChangeCarAgent.firePropertyChange(carUIEventType.itinerarySet.toString() , null, itinerary);
 	}
 	
+	/**
+	 * Fonction executee par la voiture lorsque l'itineraire est recalcule
+	 * Envoie le nouvel itineraire a l'interface utilisateur
+	 * @param itinerary Nouvel itineraire
+	 */
 	@Override
 	public void onItineraryReplanned(LinkedList<Integer> itinerary){
+		this.log(new GPSLog("Itineraire recalcule automatiquement"));
 		propertyChangeCarAgent.firePropertyChange(carUIEventType.itinerarySet.toString() , null, itinerary);
 	}
 	
+	/**
+	 * Fonction executee par la voiture lorsque l'elle passe par un point de l'itineraire
+	 * Envoie le point par lequel la voiture est passee a l'interface utilisateur
+	 * @param wayPoint Identifiant du point de passage
+	 */
 	@Override
 	public void onWayPointPassed(Integer wayPoint){
 		propertyChangeCarAgent.firePropertyChange(carUIEventType.wayPointPassed.toString() , null, wayPoint);
 	}
 	
+	/**
+	 * Fonction executee par la voiture lorsqu'elle change de route
+	 * @param road Identifiant de la nouvelle route
+	 */
 	@Override
 	public void onRoadChanged(Integer road){
-		
+		this.log(new GPSLog("Changement de route ( "+ road +" )"));
 	}
 	
+	/**
+	 * Fonction executee par la voiture lorsque la navigation est arretee
+	 */
 	@Override
 	public void onNavigationStop() {
 		
 	}
 	
+	/**
+	 * Agrege les donnees recentes de la voiture avec la nouvelle donnee locale
+	 * Envoie les donnees aggregees aux voitures alentours
+	 * @param newLocalData Nouvelle donnee locale
+	 */
 	public void mergeLocalData(LocalData newLocalData){
 		if(newLocalData == null) return;
 		
 		Pair<RecentData, Boolean> lb = this.recentDataManager.merge(newLocalData);
-		this.log(new DataLog("Donnée locale aggrégée ("+ lb.first +")"));
+		this.log(new DataLog("Donnee locale aggregee ("+ lb.first +")"));
 		
 		if(lb.second == false) return;
 		
+		/* Si la donnee recente de la voiture a ete modifiee (lb.second == true), on envoie autour de nous */
 		RecentDataMessage m = new RecentDataMessage(lb.first);
 		AgentHelper.sendMessageAround(this, ACLMessage.PROPAGATE, m);
 		
-		this.log(new BroadcastMessageLog("Donnée récente envoyée aux véhicules alentours ("+ lb.first +")"));
+		this.log(new BroadcastMessageLog("Donnee recente envoyee aux vehicules alentours ("+ lb.first +")"));
 		
 		System.out.println("[DEBUG@"+ this.getLocalName() +"@onIntersectionPassed] RecentData sent "
 				+ "(Road: "+ lb.first.getRoadId() +"  AverageDriveTime: "+ lb.first.getAverageTravelTime() +")");
 	}
 	
-	public class BroadCastRecentDataBehaviour extends TickerBehaviour{
+	/**
+	 * Behaviour envoyant periodiquement les donnees recentes de la voiture aux vehicules alentours
+	 */
+	public class BroadcastRecentDataBehaviour extends TickerBehaviour{
 
-		public BroadCastRecentDataBehaviour(Agent a, long period) {
+		public BroadcastRecentDataBehaviour(Agent a, long period) {
 			super(a, period);
 		}
 
@@ -236,20 +332,25 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 		}
 	}
 		
+	/**
+	 * Behaviour traitant la receptions des messages les plus courants
+	 */
 	public class HandleMessagesBehaviour extends Behaviour{
-		
+
 		public HandleMessagesBehaviour(Agent agent){
 			super(agent);
 		}
 		
 		@Override
 		public void action() {
+			
+		   /* Reception des donnees recentes d'autres vehicules */
            boolean received1 = AgentHelper.receiveMessageFromAround(CarAgent.this, MessageTemplate.MatchPerformative(ACLMessage.PROPAGATE), new MessageVisitor(){
         	   public boolean onRecentDataMessage(RecentDataMessage message, ACLMessage aclMsg){
         		   System.out.println("[DEBUG@"+ CarAgent.this.getLocalName() +"@receiveMessageFromAround] Recent data received from " + aclMsg.getSender().getLocalName()
         		   		+ "(Road: " + message.getRecentDatas().get(0).getRoadId() + " Number contributors: " + message.getRecentDatas().get(0).getContributors().size() + ")");
         		   
-        		   CarAgent.this.log(new ReceiveMessageLog("Reception d'une donnée récente de " + aclMsg.getSender().getLocalName() + " concernant "+ message.getRecentDatas().size() +" route(s)"));
+        		   CarAgent.this.log(new ReceiveMessageLog("Reception d'une donnee recente de " + aclMsg.getSender().getLocalName() + " concernant "+ message.getRecentDatas().size() +" route(s)"));
         		   
         		   RecentDataMessage rdMessage = new RecentDataMessage();
         		   
@@ -261,18 +362,19 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
         		   }
         		           		   
         		   if(rdMessage.size() > 0){        			
-            		   CarAgent.this.log(new DataLog("Donnée récente reçue aggrégée"));
+            		   CarAgent.this.log(new DataLog("Donnee recente reçue aggregee"));
 
         			   AgentHelper.sendMessageAround(CarAgent.this, ACLMessage.PROPAGATE, rdMessage);
             		   System.out.println("[DEBUG@"+ CarAgent.this.getLocalName() +"@receiveMessageFromAround] Broadcasted " + rdMessage.size() + " merged recent data");
             		   
-            		   CarAgent.this.log(new BroadcastMessageLog("Donnée récente aggrégée envoyée aux véhicules alentours"));
+            		   CarAgent.this.log(new BroadcastMessageLog("Donnee recente aggregee envoyee aux vehicules alentours"));
         		   }
         		   
         		   return true;
         	   }
             });		
-                    
+           
+           /* Reception des requetes d'exploration */
            boolean received2 = AgentHelper.receiveMessageFromAround(CarAgent.this, MessageTemplate.MatchPerformative(ACLMessage.REQUEST), new MessageVisitor(){
         	   
         		public boolean onExplorationRequestMessage(ExplorationRequestMessage message, ACLMessage aclMsg){
@@ -378,7 +480,7 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 					broadcastedAnswersIssuers.add(message.getAnswerIssuer());
 					
 					if(ExplorationBehaviour.this.initialRequestMessage.getRequestIssuer() == CarAgent.this.getAID()){
-						CarAgent.this.log(new ExplorationLog("Réponse envoyée par "+ message.getAnswerIssuer().getLocalName() +" "
+						CarAgent.this.log(new ExplorationLog("Reponse envoyee par "+ message.getAnswerIssuer().getLocalName() +" "
 								+ "reçue pour la demande d'exploration " + ExplorationBehaviour.this.initialRequestMessage.getExplorationRequestId()));
 						
 						System.out.println("[DEBUG@"+ CarAgent.this.getLocalName() +"@onExplorationAnswerMessage] Answer received from " + message.getAnswerIssuer().getLocalName() + ": " + message.getRecentDatas());
@@ -388,7 +490,7 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 					}
 					else{
 						if(message.decreaseTtl() <= 0){return true;}
-						CarAgent.this.log(new ExplorationLog("Diffusion d'une réponse pour la demande d'exploration " + ExplorationBehaviour.this.initialRequestMessage.getExplorationRequestId()));
+						CarAgent.this.log(new ExplorationLog("Diffusion d'une reponse pour la demande d'exploration " + ExplorationBehaviour.this.initialRequestMessage.getExplorationRequestId()));
 
 						AgentHelper.sendMessageAround(CarAgent.this, ACLMessage.INFORM, ExplorationBehaviour.this.initialRequestMessage.getExplorationRequestId(), message);
 					}	
@@ -422,7 +524,7 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 				}
 				
 				if(!answerMessage.getRecentDatas().isEmpty()){
-					CarAgent.this.log(new ExplorationLog("Réponse envoyée pour la demande d'exploration " + this.initialRequestMessage.getExplorationRequestId()));
+					CarAgent.this.log(new ExplorationLog("Reponse envoyee pour la demande d'exploration " + this.initialRequestMessage.getExplorationRequestId()));
 					AgentHelper.sendMessageAround(CarAgent.this, ACLMessage.INFORM, initialRequestMessage.getExplorationRequestId(), answerMessage);
 				}
 			}
@@ -452,7 +554,7 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 				}
 				
 				if(itineraryChanged){
-					CarAgent.this.log(new ExplorationLog("Lancement d'une vague d'exploration car l'itinéraire a été amélioré"));
+					CarAgent.this.log(new ExplorationLog("Lancement d'une vague d'exploration car l'itineraire a ete ameliore"));
 					CarAgent.this.initializeExplorationRequest();
 				}
 			}
@@ -493,7 +595,7 @@ public class CarAgent extends ShortRangeAgent implements GPSObserver {
 				this.stop();
 				return;
 			}
-			CarAgent.this.log(new ExplorationLog("Envoie d'une requête d'exploration aux véhicules alentours (Séquence "+ requestMessage.getSequenceNumber() +") "
+			CarAgent.this.log(new ExplorationLog("Envoie d'une requête d'exploration aux vehicules alentours (Sequence "+ requestMessage.getSequenceNumber() +") "
 					+ "pour la requête " + requestMessage.getExplorationRequestId()));
 			AgentHelper.sendMessageAround(CarAgent.this, this.performative, this.conversationId, this.requestMessage);
 		}
